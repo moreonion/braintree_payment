@@ -1,0 +1,34 @@
+<?php
+
+use \Drupal\braintree_payment\CreditCardController;
+
+/**
+ * Implements hook_payment_method_controller_info().
+ */
+function braintree_payment_payment_method_controller_info() {
+  return array(
+    'braintree_payment_credit_card' => '\Drupal\braintree_payment\CreditCardController',
+  );
+}
+
+/**
+* Implements hook_libraries_info().
+*
+* for stripes php wrapper library.
+*/
+function braintree_payment_libraries_info() {
+  $libraries['braintree-php'] = array(
+    'name' => 'Braintree',
+    'vendor url' => 'https://www.braintreepayments.com/',
+    'download url' => 'https://developers.braintreepayments.com/start/hello-server/php',
+    'version arguments' => array(
+      'file' => 'CHANGELOG.md',
+      'pattern' => '/([0-9\.]+)/',
+      'lines' => 1
+    ),
+    'xautoload' => function($adapter) {
+      $adapter->composerJson('composer.json');
+    },
+  );
+  return $libraries;
+}
