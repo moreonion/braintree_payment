@@ -1,17 +1,17 @@
 <?php
 
-use Braintree\Exception;
-use Braintree\Exception\Authentication;
+use \Braintree\Exception;
+use \Braintree\Exception\Authentication;
 use \Braintree\ClientToken;
 use \Braintree\Configuration;
-use Drupal\payment_forms\MethodFormInterface;
+use \Drupal\payment_forms\MethodFormInterface;
 
 namespace Drupal\braintree_payment;
 
 /**
  * Defines a configuration form for the Braintree payment method.
  */
-class CreditCardConfigurationForm implements MethodFormInterface {
+class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInterface {
 
   /**
    * Returns a new configuration form.
@@ -24,6 +24,18 @@ class CreditCardConfigurationForm implements MethodFormInterface {
     if (empty($library['installed'])) {
       drupal_set_message($library['error message'], 'error', FALSE);
     }
+
+    $form['environment'] = array(
+      '#type' => 'select',
+      '#title' => t('Environment'),
+      '#description' => t('This changes between the production environment (i.e. actual use on a live site) and the sandbox environment (i.e. for testing purposes where no real credit card data is used.)'),
+      '#required' => TRUE,
+      '#default_value' => $cd['environment'],
+      '#options' => array(
+        'production' => t('Production'),
+        'sandbox' => t('Sandbox')
+      )
+    );
 
     $form['merchant_id'] = array(
       '#type' => 'textfield',
@@ -81,15 +93,15 @@ class CreditCardConfigurationForm implements MethodFormInterface {
 
     // No special key-format, no further validation required.
     // Try to contact Braintree to see if the credentials are correct.
-    Configuration::environment('sandbox');
-    Configuration::merchantId($cd['merchant_id']);
-    Configuration::publicKey($cd['public_key']);
-    Configuration::privateKey($cd['private_key']);
+    \Braintree\Configuration::environment($cd['environment']);
+    \Braintree\Configuration::merchantId($cd['merchant_id']);
+    \Braintree\Configuration::publicKey($cd['public_key']);
+    \Braintree\Configuration::privateKey($cd['private_key']);
 
     try {
-      ClientToken::generate();
+      \Braintree\ClientToken::generate();
     }
-    catch (Authentication $ex) {
+    catch (\Braintree\Authentication $ex) {
       $values = array(
         '@status' => $ex->getCode(),
         '@message' => $ex->getMessage(),

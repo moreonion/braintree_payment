@@ -1,8 +1,8 @@
 <?php
 
-use Braintree\ClientToken;
+use \Braintree\ClientToken;
 use \Braintree\Configuration;
-use Drupal\payment_forms\CreditCardForm;
+use \Drupal\payment_forms\CreditCardForm;
 
 namespace Drupal\braintree_payment;
 
@@ -10,7 +10,7 @@ namespace Drupal\braintree_payment;
  * @file
  * Defines the Credit Card Form on the clientside.
  */
-class CreditCardForm extends CreditCardForm {
+class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
   static protected $issuers = array(
     'visa'           => 'Visa',
     'mastercard'     => 'MasterCard',
@@ -33,12 +33,12 @@ class CreditCardForm extends CreditCardForm {
   public function generateToken($env, $merchant, $pubkey, $privkey) {
     libraries_load('braintree-php');
 
-    Configuration::environment($env);
-    Configuration::merchantId($merchant);
-    Configuration::publicKey($pubkey);
-    Configuration::privateKey($privkey);
+    \Braintree\Configuration::environment($env);
+    \Braintree\Configuration::merchantId($merchant);
+    \Braintree\Configuration::publicKey($pubkey);
+    \Braintree\Configuration::privateKey($privkey);
 
-    return ClientToken::generate();
+    return \Braintree\ClientToken::generate();
   }
 
   /**

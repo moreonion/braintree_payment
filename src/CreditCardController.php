@@ -9,8 +9,8 @@ namespace Drupal\braintree_payment;
  * Defines the controller class of the Braintree payment method.
  */
 class CreditCardController extends \PaymentMethodController {
-  public $controllerDataDefaults = array(
-    'environment' => '',
+  public $controller_data_defaults = array(
+    'environment' => 'sandbox',
     'merchant_id' => '',
     'private_key' => '',
     'public_key'  => '',
@@ -91,11 +91,8 @@ class CreditCardController extends \PaymentMethodController {
     ]);
 
     if ($transaction_result->success &&
-      property_exists($transaction_result, 'transaction') &&
-      property_exists($transaction_result->transaction, 'status') &&
       $transaction_result->transaction->status === 'submitted_for_settlement')
     {
-      $this->drupal_set_message(json_encode($transaction_result));
       $payment->setStatus(new \PaymentStatusItem(PAYMENT_STATUS_SUCCESS));
       $this->entity_save('payment', $payment);
 
@@ -110,7 +107,6 @@ class CreditCardController extends \PaymentMethodController {
       }
     }
     else {
-      $this->drupal_set_message(json_encode($transaction_result));
       $payment->setStatus(new \PaymentStatusItem(PAYMENT_STATUS_FAILED));
       entity_save('payment', $payment);
 
