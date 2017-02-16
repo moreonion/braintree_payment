@@ -1,0 +1,590 @@
+<?php
+/**
+ * PHPUnitCreditCardController mocks drupal specific functions to allow
+ * testing isolated from the drupal environment.
+ */
+
+use Drupal\braintree_payment;
+
+final class PHPUnitCreditCardController extends \Drupal\braintree_payment\CreditCardController {
+  const default_controller_data = array(
+    'merchant_id' => '',
+    'public_key' => '',
+    'private_key' => '',
+  );
+
+  // Monkeypatch constructor because it uses t()
+  public function __construct() {
+    $this->title = 'Braintree Credit Card';
+
+    $this->payment_configuration_form_elements_callback = 'payment_forms_payment_form';
+    $this->payment_method_configuration_form_elements_callback = 'payment_forms_method_configuration_form';
+  }
+  function drupal_set_message($msg) {
+    print $msg;
+    return TRUE;
+  }
+  function watch($scope, $msg, $log_level) {
+    print $scope . ' ' . $msg;
+    return TRUE;
+  }
+  function drupal_write_record($table, $params) {
+    /* print $table . ': ' . implode('|', $params); */
+    return TRUE;
+  }
+  /* function entity_save($entity_name, $entity_data) { */
+  /*   print $entity_name . ': ' .  json_encode($entity_data); */
+  /*   return TRUE; */
+  /* } */
+  function libraries_load($library) { return TRUE; }
+}
+
+class ExampleTestCase extends DrupalWebTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'Example Test',
+      'description' => 'Just trying this out...',
+      'group' => 'Braintree_Payment',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp(
+      array(
+        'libraries',
+        'payment',
+        'payment_context',
+        'payment_controller_data',
+        'payment_forms',
+        'webform_paymethod_select',
+        'xautoload',
+        'braintree_payment'
+      )
+    );
+    $this->ccc = new PHPUnitCreditCardController();
+  }
+
+  public function testCCCExecuteNULLPaymentPassed() {
+    $ccc = new PHPUnitCreditCardController(NULL);
+  }
+
+  public function testFakeValidNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidNonceTestAmounts() {
+    # Authorization Response: Authorized
+    # Settlement Response: Settled
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+
+    # Authorization Response: Processor Declined
+    # Settlement Response: n/a
+    $amount = rand(2000,3000);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_failed');
+
+    # Authorization Response: Authorized
+    # Settlement Response: Settled
+    $amount = rand(3001,4000);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+
+    # Authorization Response: Authorized
+    # Settlement Response: Settlement Declined or Settled
+    # see: https://developers.braintreepayments.com/reference/general/statuses#settlement-declined
+    $amount = 4001;
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+
+    # Authorization Response: Authorized
+    # Settlement Response: Settlement Declined or Settled
+    $amount = 4001;
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    //@TODO: Does this fail for the right reasons?
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+
+    # Authorization Response: Gateway rejected
+    # Settlement Response: n/a
+    $amount = 5001;
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_failed');
+
+    # Authorization Response: Processor Declined
+    # Settlement Response: n/a
+    //@TODO: THIS SHOULD FAIL!
+    $amount = 5001.01;
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_failed');
+
+    # Authorization Response: Authorized
+    # Settlement Response: Processor Unavailable
+    $amount = 5001.02;
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+
+    # Authorization Response: Authorized
+    # Settlement Response: Settled
+    # Maybe we can break stuff with a huge number
+    # //@TODO: We actually can, why?
+    $amount = 1000000000000;
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidNoBillingAddressNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-no-billing-address-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidVisaNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-visa-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  // @TODO : Why does this fail?
+  public function testFakeValidAmexNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-amex-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidMasterCardNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-mastercard-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidDiscoverNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-discover-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  // @TODO: Why does JCB fail?
+  public function testFakeValidJCBNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-jcb-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidMaestroNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-maestro-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidPrepaidNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-prepaid-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidCommericalNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-commercial-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidDurbinRegulatedNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-durbin-regulated-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidHealthcareNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-healthcare-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidDebitNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-debit-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidPayrollNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-payroll-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidNoIndicatorsNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-no-indicators-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidUnknownIndicatorsNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-unknown-indicators-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidCountryOfIssuanceUSANonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-country-of-issuance-usa-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidCountryOfIssuanceCanadaNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-country-of-issuance-cad-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  public function testFakeValidBankNetworkOnlyNonce() {
+    $amount = rand(1,1999);
+    $payment_params = array(
+      'uid' => 1,
+      'contextObj' => $this->setUpPaymentContext('Testee', 'Test', 't@t.at'),
+      'method' => $this->setUpMethod(),
+      'method_data' => $this->setUpMethodData('fake-valid-issuing-bank-network-only-nonce'),
+      'line_items' => $this->mockLineItems($amount),
+    );
+    $payment = new Payment($payment_params);
+
+    $this->ccc->execute($payment);
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+  }
+
+  private function setUpPaymentContext($first, $last, $email) {
+    return new MockedContext(
+      array(
+        'first_name' => $first,
+        'last_name' => $last,
+        'email' => $email
+      )
+    );
+  }
+
+  private function setUpMethod($controller_data = PHPUnitCreditCardController::default_controller_data) {
+    return new MockedMethod(1234, 'test_payment_method', $controller_data);
+  }
+
+  private function setUpMethodData($nonce) {
+    return array('braintree-payment-nonce' => $nonce);
+  }
+
+  private function mockLineItems($amount) {
+    /* $item = new PaymentLineItem(array('')); */
+    /* $item->quantity = 1; */
+    /* $item->amount = (float)$amount; */
+
+    /* return $item; */
+    return array(new PaymentLineItem(array(
+      'amount' => $amount,
+      'donation' => array(
+        'amount_source' => 'component',
+        'amount_component' => '9',
+        'quantity_source' => 'fixed',
+        'quantity_component' => null,
+        'amount' => $amount,
+        'description' => 'Donation',
+        'description_arguments' => [],
+        'name' => 'donation',
+        'tax_rate' => 0,
+        'quantity' => 1
+      )
+    )));
+  }
+}
+
+/**
+ * Represents a mocked $method for the $payment variable passed to the
+ * execute($payment) function.
+ */
+class MockedMethod {
+  public $controller_data;
+
+  public function __construct($pmid, $title_specific, $controller_data) {
+    $this->controller_data = $controller_data;
+    $this->pmid = $pmid;
+    $this->title_specific = $title_specific;
+  }
+}
+
+/**
+ * Represents a mocked $contextObj for the $payment variable passed to the
+ * execute($payment) function.
+ */
+class MockedContext {
+  /**
+   * @param $fields Associative array mocking input field IDs.
+   */
+  public function __construct($fields) {
+    $this->fields = $fields;
+  }
+
+  /**
+   * @param $field The ID of a mocked input field.
+   * @return The value of the mocked input field.
+   */
+  public function value($field) {
+    return $this->fields[$field];
+  }
+}
+
+class MockedPayment extends PaymentLineItem {
+  public function __construct($amount, $params) {
+    parent::__construct($params);
+    $this->amount = $amount;
+  }
+
+  public function __call($method, $args) {
+    if(isset($this->$method)) {
+      $func = $this->$method;
+      return call_user_func_array($func, $args);
+    }
+  }
+}
+?>
