@@ -20,11 +20,9 @@
 
     var ccn_id = '[id$=' + pmid + '-credit-card-number]';
     var cvv_id = '[id$=' + pmid + '-secure-code]';
-    var issuer_id = '[id$=' + pmid + '-issuer]';
 
     var ccn = $method.find(ccn_id)[0].value;
     var cvv = $method.find(cvv_id)[0].value;
-    var issuer = $method.find(issuer_id)[0].value;
 
     var expiry_month_id = '[id$=' + pmid + '-expiry-date-month]';
     var expiry_year_id = '[id$=' + pmid + '-expiry-date-year]';
@@ -43,7 +41,7 @@
       return $method.find('[name$="[' + name + ']"]');
     };
 
-    var client = braintree.client.create({
+    braintree.client.create({
       authorization: this.settings[pmid].payment_token
     }, function(clientErr, clientInstance) {
       var data = {
@@ -79,11 +77,11 @@
         getField(pmid + '][braintree-payment-nonce').val(response.creditCards[0].nonce);
 
         // Now get rid of all the creditcard data
-        ccn = "";
-        cvv = "";
-        expiry_month = "";
-        expiry_year = "";
-        expiry_date = "";
+        ccn = '';
+        cvv = '';
+        expiry_month = ''
+        expiry_year = ''
+        expiry_date = ''
         $(ccn_id).val('');
         $(cvv_id).val('');
         $(expiry_month_id).val('');

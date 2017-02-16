@@ -1,17 +1,27 @@
 <?php
 
+use Braintree\Exception;
+use Braintree\Exception\Authentication;
+use \Braintree\ClientToken;
+use \Braintree\Configuration;
+use Drupal\payment_forms\MethodFormInterface;
+
 namespace Drupal\braintree_payment;
 
-class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInterface {
+/**
+ * Defines a configuration form for the Braintree payment method.
+ */
+class CreditCardConfigurationForm implements MethodFormInterface {
 
+  /**
+   * Returns a new configuration form.
+   */
   public function form(array $form, array &$form_state, \PaymentMethod $method) {
     $cd = $method->controller_data;
 
-    //@TODO: WTF - Invalid library name does not throw error message??
     $library = libraries_detect('braintree-php');
 
-    // @TODO: Stop the whole thing if library not found!
-    if(empty($library['installed'])) {
+    if (empty($library['installed'])) {
       drupal_set_message($library['error message'], 'error', FALSE);
     }
 
@@ -19,7 +29,7 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
       '#type' => 'textfield',
       '#title' => t('Merchant ID'),
       '#description' => t('Available from Account / API Keys, Tokenization Keys, Encryption Keys / Client-Side Encryption Keys on braintreegateway.com'),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => $cd['merchant_id'],
     );
 
@@ -27,7 +37,7 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
       '#type' => 'textfield',
       '#title' => t('Public key'),
       '#description' => t('Available from Account / API Keys, Tokenization Keys, Encryption Keys / API Keys on braintreegateway.com'),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => $cd['public_key'],
     );
 
@@ -35,7 +45,7 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
       '#type' => 'textfield',
       '#title' => t('Private key'),
       '#description' => t('Available from Account / API Keys, Tokenization Keys, Encryption Keys / API Keys on braintreegateway.com'),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => $cd['private_key'],
     );
 
@@ -52,6 +62,9 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
     return $form;
   }
 
+  /**
+   * Validates the configuration form input.
+   */
   public function validate(array $element, array &$form_state, \PaymentMethod $method) {
     $cd = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
     foreach ($cd['field_map'] as $k => &$v) {
@@ -60,8 +73,7 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
 
     $library = libraries_detect('braintree-php');
 
-    // @TODO: Handle missing library!
-    if(empty($library['installed'])) {
+    if (empty($library['installed'])) {
       drupal_set_message($library['error message'], 'error', FALSE);
     }
 
@@ -69,25 +81,27 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
 
     // No special key-format, no further validation required.
     // Try to contact Braintree to see if the credentials are correct.
-    \Braintree\Configuration::environment('sandbox');
-    \Braintree\Configuration::merchantId($cd['merchant_id']);
-    \Braintree\Configuration::publicKey($cd['public_key']);
-    \Braintree\Configuration::privateKey($cd['private_key']);
+    Configuration::environment('sandbox');
+    Configuration::merchantId($cd['merchant_id']);
+    Configuration::publicKey($cd['public_key']);
+    Configuration::privateKey($cd['private_key']);
 
     try {
-      \Braintree\ClientToken::generate();
-    } catch(\Braintree\Exception\Authentication $ex) {
+      ClientToken::generate();
+    }
+    catch (Authentication $ex) {
       $values = array(
         '@status' => $ex->getCode(),
         '@message' => $ex->getMessage(),
       );
 
-      // Braintree doesn't give us any meaningful error msg or error code, so we just print that something's wrong
+      // Braintree doesn't give us any meaningful error msg or error code, so we just print that something's wrong.
       $msg = t('Unable to contact Braintree using this set of keys. Please check if your Merchant ID, Public and Private key are correct.');
       form_error($element['public_key'], $msg);
       form_error($element['private_key']);
       form_error($element['merchant_id']);
-    } catch(\Braintree\Exception $ex) {
+    }
+    catch (Exception $ex) {
       $values = array(
         '@status' => $ex->getCode(),
         '@message' => $ex->getMessage(),

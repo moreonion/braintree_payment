@@ -1,9 +1,16 @@
 <?php
 
+use Braintree\Configuration;
+use Braintree\Transaction;
+
 namespace Drupal\braintree_payment;
 
-class CreditCardController extends \PaymentMethodController implements \Drupal\webform_paymethod_select\PaymentRecurrentController {
-  public $controller_data_defaults = array(
+/**
+ * Defines the controller class of the Braintree payment method.
+ */
+class CreditCardController extends \PaymentMethodController {
+  public $controllerDataDefaults = array(
+    'environment' => '',
     'merchant_id' => '',
     'private_key' => '',
     'public_key'  => '',
@@ -11,6 +18,9 @@ class CreditCardController extends \PaymentMethodController implements \Drupal\w
     'enable_recurrent_payments' => 0,
   );
 
+  /**
+   * Sets up title and configuration form callbacks.
+   */
   public function __construct() {
     $this->title = t('Braintree Credit Card');
 
@@ -18,10 +28,16 @@ class CreditCardController extends \PaymentMethodController implements \Drupal\w
     $this->payment_method_configuration_form_elements_callback = 'payment_forms_method_configuration_form';
   }
 
+  /**
+   * Returns a new instance of CreditCardForm.
+   */
   public function paymentForm() {
     return new CreditCardForm();
   }
 
+  /**
+   * Returns a new instance of CreditCardConfigurationForm.
+   */
   public function configurationForm() {
     return new CreditCardConfigurationForm();
   }
@@ -29,7 +45,7 @@ class CreditCardController extends \PaymentMethodController implements \Drupal\w
   /**
    * {@inheritdoc}
    */
-  function validate(\Payment $payment, \PaymentMethod $method, $strict) {
+  public function validate(\Payment $payment, \PaymentMethod $method, $strict) {
     parent::validate($payment, $method, $strict);
 
     // @TODO: Which version?
@@ -40,7 +56,6 @@ class CreditCardController extends \PaymentMethodController implements \Drupal\w
       throw new \PaymentValidationException(t('The braintree-php library could no tbe found.'));
     }
 
-    // @TODO: Recurring payments
     if ($payment->contextObj && ($interval = $payment->contextObj->value('donation_interval'))) {
       if (empty($method->controller_data['enable_recurrent_payments']) && in_array($interval, ['m', 'y'])) {
         throw new \PaymentValidationException(t('Recurrent payments are disabled for this payment method.'));
@@ -48,44 +63,39 @@ class CreditCardController extends \PaymentMethodController implements \Drupal\w
     }
   }
 
+  /**
+   * Executes a transaction.
+   */
   public function execute(\Payment $payment) {
     $this->libraries_load('braintree-php');
-    watchdog('braintree_info', 'blablabla', WATCHDOG_ERROR);
 
     $context = $payment->contextObj;
     $plan_id = NULL;
 
-    // @TODO: How much data do we want to store?
     $customer = $this->createCustomer($payment, $context);
-    watchdog('braintree_info', json_encode($customer), WATCHDOG_ERROR);
 
     $this->setBraintreeSettings(
-      'sandbox', //@TODO: Change to production
+      $payment->method->controller_data['environment'],
       $payment->method->controller_data['merchant_id'],
       $payment->method->controller_data['public_key'],
       $payment->method->controller_data['private_key']
     );
-    watchdog('braintree_info', json_encode(get_object_vars($payment)), WATCHDOG_ERROR);
 
-    // @TODO: Merchant ID should set the currency?
     $transaction_result = \Braintree\Transaction::sale([
       'amount' => $payment->totalAmount(0),
       'paymentMethodNonce' => $payment->method_data['braintree-payment-nonce'],
       'customer' => $customer,
       'options' => [
-        //@TODO: I guess we want to settle the transaction
-        //https://developers.braintreepayments.com/reference/general/statuses#authorized
-        'submitForSettlement' => true
-      ]
+        'submitForSettlement' => TRUE,
+      ],
     ]);
 
-    watchdog('braintree_info', json_encode(get_object_vars($transaction_result)), WATCHDOG_ERROR);
-
-    //@TODO: We don't store customers payment methods:
-    //https://developers.braintreepayments.com/reference/request/transaction/sale/php#new-customer-with-new-payment-method
-    if($transaction_result->success &&
+    if ($transaction_result->success &&
+      property_exists($transaction_result, 'transaction') &&
+      property_exists($transaction_result->transaction, 'status') &&
       $transaction_result->transaction->status === 'submitted_for_settlement')
     {
+      $this->drupal_set_message(json_encode($transaction_result));
       $payment->setStatus(new \PaymentStatusItem(PAYMENT_STATUS_SUCCESS));
       $this->entity_save('payment', $payment);
 
@@ -95,10 +105,12 @@ class CreditCardController extends \PaymentMethodController implements \Drupal\w
         'type'      => $transaction_result->transaction->paymentInstrumentType,
         'plan_id'   => $plan_id,
       );
-      if(!$this->drupal_write_record('braintree_payment', $params)) {
+      if (!$this->drupal_write_record('braintree_payment', $params)) {
         watchdog('braintree_payment', 'Record creation failed', WATCHDOG_ERROR);
       }
-    } else {
+    }
+    else {
+      $this->drupal_set_message(json_encode($transaction_result));
       $payment->setStatus(new \PaymentStatusItem(PAYMENT_STATUS_FAILED));
       entity_save('payment', $payment);
 
@@ -154,18 +166,25 @@ class CreditCardController extends \PaymentMethodController implements \Drupal\w
     return libraries_load($library);
   }
 
-  private function createCustomer(\Payment $payment, $context){
+  /**
+   * Creates a new customer.
+   */
+  private function createCustomer(\Payment $payment, $context) {
     return array(
       'firstName' => $context->value('first_name'),
       'lastName' => $context->value('last_name'),
-      'email' => $context->value('email')
+      'email' => $context->value('email'),
     );
   }
 
+  /**
+   * Sets the braintree configuration variables.
+   */
   private function setBraintreeSettings($env, $merch, $pub, $priv) {
     \Braintree\Configuration::environment($env);
     \Braintree\Configuration::merchantId($merch);
     \Braintree\Configuration::publicKey($pub);
     \Braintree\Configuration::privateKey($priv);
   }
+
 }

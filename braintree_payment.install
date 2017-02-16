@@ -6,7 +6,7 @@
  */
 
 /**
- * Implements hook_schema()
+ * Implements hook_schema().
  *
  * Adds the schema for the braintree_payment_payment_controllers table which
  * stores serialized PaymentMethodController objects.
@@ -14,7 +14,7 @@
 function braintree_payment_schema() {
   $schema['braintree_payment'] = array(
     'fields' => array(
-     'pid' => array(
+      'pid' => array(
         'description' => 'The payment id.',
         'type' => 'int',
         'not null' => TRUE,
@@ -72,7 +72,7 @@ function braintree_payment_update_7005() {
 
 /**
  * Use a machine-name instead of the FQ-class to identify the controller.
- **/
+ */
 function braintree_payment_update_7004() {
   db_update('payment_method')
     ->fields(array('controller_class_name' => 'braintree_payment_credit_card'))
@@ -95,7 +95,7 @@ function braintree_payment_update_7003() {
 }
 
 /**
- * Add braintree_payment table
+ * Add braintree_payment table.
  */
 function braintree_payment_update_7002() {
   $schema = braintree_payment_schema();
@@ -103,7 +103,7 @@ function braintree_payment_update_7002() {
 }
 
 /**
- * Add braintree_payment_plans table
+ * Add braintree_payment_plans table.
  */
 function braintree_payment_update_7001() {
   $schema = braintree_payment_schema();

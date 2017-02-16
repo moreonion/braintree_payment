@@ -1,9 +1,16 @@
 <?php
 
+use Braintree\ClientToken;
+use \Braintree\Configuration;
+use Drupal\payment_forms\CreditCardForm;
+
 namespace Drupal\braintree_payment;
 
-class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
-  // @TODO: Which issuers are available?
+/**
+ * @file
+ * Defines the Credit Card Form on the clientside.
+ */
+class CreditCardForm extends CreditCardForm {
   static protected $issuers = array(
     'visa'           => 'Visa',
     'mastercard'     => 'MasterCard',
@@ -11,7 +18,7 @@ class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
     'discover'       => 'Discover',
     'diners_club'    => 'Diners Club',
   );
-  static protected $cvc_label = array(
+  static protected $cvcLabel = array(
     'visa'           => 'CVV2 (Card Verification Value 2)',
     'amex'           => 'CID (Card Identification Number)',
     'mastercard'     => 'CVC2 (Card Validation Code 2)',
@@ -20,46 +27,48 @@ class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
     'diners_club'    => 'CSC (Card Security Code)',
   );
 
-  public function generate_token($env, $merchant, $pubkey, $privkey) {
-    $lib = libraries_load('braintree-php');
-    if(!$lib['loaded']) {
-      // @TODO: Uncomment exception
-      /* throw new \PaymentValidationException(t('Could not load braintree-php library.')); */
-    }
+  /**
+   * Generates a Braintree Client Token.
+   */
+  public function generateToken($env, $merchant, $pubkey, $privkey) {
+    libraries_load('braintree-php');
 
-    \Braintree\Configuration::environment($env);
-    \Braintree\Configuration::merchantId($merchant);
-    \Braintree\Configuration::publicKey($pubkey);
-    \Braintree\Configuration::privateKey($privkey);
+    Configuration::environment($env);
+    Configuration::merchantId($merchant);
+    Configuration::publicKey($pubkey);
+    Configuration::privateKey($privkey);
 
-    return \Braintree\ClientToken::generate();
+    return ClientToken::generate();
   }
 
+  /**
+   * Defines the form that shall be rendered.
+   */
   public function form(array $form, array &$form_state, \Payment $payment) {
     $form = parent::form($form, $form_state, $payment);
 
-    $form['braintree-payment-nonce'] = array (
+    $form['braintree-payment-nonce'] = array(
       '#type' => 'hidden',
-      '#default_value' => ''
+      '#default_value' => '',
     );
 
     $method = &$payment->method;
 
-    // Generate a token for the current client
-    $payment_token = $this->generate_token(
+    // Generate a token for the current client.
+    $payment_token = $this->generateToken(
       'sandbox',
       $method->controller_data['merchant_id'],
       $method->controller_data['public_key'],
       $method->controller_data['private_key']
     );
 
-    // Add token & public key to settings for clientside
+    // Add token & public key to settings for clientside.
     $settings['braintree_payment'][$method->pmid] = array(
       'payment_token' => $payment_token,
-      'pmid' => $method->pmid
+      'pmid' => $method->pmid,
     );
 
-    // Attach client side JS files and settings to javascript settings variable
+    // Attach client side JS files and settings to javascript settings variable.
     drupal_add_js($settings, 'setting');
     drupal_add_js('https://js.braintreegateway.com/web/3.7.0/js/client.min.js',
       array(
@@ -69,7 +78,8 @@ class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
     drupal_add_js('https://js.braintreegateway.com/web/3.7.0/js/hosted-fields.min.js',
       array(
         'type' => 'external',
-      'group' => JS_LIBRARY));
+        'group' => JS_LIBRARY,
+      ));
     drupal_add_js(drupal_get_path('module', 'braintree_payment') . '/braintree.js',
       array(
         'type' => 'file',
@@ -81,8 +91,8 @@ class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
       '#attributes' => array('class' => array('braintree-extra-data')),
     ) + $this->mappedFields($payment);
 
-    // Stripe does only use the name attribute instead of first_name / last_name.
-    if (!isset($ed['name']) && isset($ed['first_name']) && isset($ed['last_name'])) {
+    if (!isset($ed['name']) && isset($ed['first_name'])
+      && isset($ed['last_name'])) {
       $ed['name'] = $ed['first_name'];
       $ed['name']['#value'] .= ' ' . $ed['last_name']['#value'];
       $ed['name']['#attributes']['data-braintree'] = 'name';
@@ -94,12 +104,18 @@ class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
     return $form;
   }
 
+  /**
+   * Validation function, real validation on the clientside.
+   */
   public function validate(array $element, array &$form_state, \Payment $payment) {
     // Braintree takes care of the real validation, client-side.
     $values = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
     $payment->method_data['braintree-payment-nonce'] = $values['braintree-payment-nonce'];
   }
 
+  /**
+   * Defines the mapped fields.
+   */
   protected function mappedFields(\Payment $payment) {
     $fields = array();
     $field_map = $payment->method->controller_data['field_map'];
@@ -115,6 +131,9 @@ class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
     return $fields;
   }
 
+  /**
+   * Defines additional data fields.
+   */
   public static function extraDataFields() {
     $fields = array();
     $f = array(
@@ -137,4 +156,5 @@ class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
     }
     return $fields;
   }
+
 }
