@@ -61,7 +61,6 @@
         }
       }, function (requestErr, response) {
         if (requestErr) {
-          // @TODO: Better error messages
           var detail_msg = requestErr.details.originalError.error.message;
           if (detail_msg.length > 0) {
             Drupal.behaviors.braintree_payment.errorHandler(detail_msg);

@@ -196,9 +196,8 @@ class NoncesTestCase extends DrupalWebTestCase {
     );
     $payment = new Payment($payment_params);
 
-    // @TODO: Does this fail for the right reasons?
     $this->ccc->execute($payment);
-    $this->assertEqual($payment->statuses[1]->status, 'payment_status_success');
+    $this->assertEqual($payment->statuses[1]->status, 'payment_status_failed');
 
     // Authorization Response: Gateway rejected
     // Settlement Response: n/a.
@@ -217,7 +216,8 @@ class NoncesTestCase extends DrupalWebTestCase {
 
     // Authorization Response: Processor Declined
     // Settlement Response: n/a.
-    // @TODO: THIS SHOULD FAIL!
+    // @TODO: Response from braintree API does not correspond with expectations
+    // Return is "success" and "submitted_for_settlement"
     $amount = 5001.01;
     $payment_params = array(
       'uid' => 1,

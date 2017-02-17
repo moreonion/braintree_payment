@@ -48,10 +48,6 @@ class CreditCardController extends \PaymentMethodController {
   public function validate(\Payment $payment, \PaymentMethod $method, $strict) {
     parent::validate($payment, $method, $strict);
 
-    // @TODO: Which version?
-    /* if (version_compare($library['version'], '3', '<')) { */
-    /*   throw new \PaymentValidationException(t('stripe_payment needs at least version 3 of the stripe-php library (installed: @version).', array('@version' => $library['version']))); */
-    /* } */
     if (!($library = libraries_detect('braintree-php')) || empty($library['installed'])) {
       throw new \PaymentValidationException(t('The braintree-php library could no tbe found.'));
     }

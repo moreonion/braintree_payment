@@ -11,4 +11,4 @@ dependencies[] = payment_forms (>= 7.x-2.0-beta1)
 dependencies[] = webform_paymethod_select
 dependencies[] = xautoload (>= 7.x-5.0)
 
-files[] = tests/failing.test
+files[] = tests/nonces.test
