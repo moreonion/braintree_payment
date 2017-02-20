@@ -17,7 +17,7 @@ function braintree_payment_payment_method_controller_info() {
 /**
  * Implements hook_libraries_info().
  *
- * For stripes php wrapper library.
+ * For braintree php wrapper library.
  */
 function braintree_payment_libraries_info() {
   $libraries['braintree-php'] = array(
