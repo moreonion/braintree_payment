@@ -14,9 +14,8 @@ class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
   static protected $issuers = array(
     'visa'           => 'Visa',
     'mastercard'     => 'MasterCard',
-    'jcb'            => 'JCB',
     'discover'       => 'Discover',
-    'diners_club'    => 'Diners Club',
+    'diners_club'    => 'Diners Club'
   );
   static protected $cvcLabel = array(
     'visa'           => 'CVV2 (Card Verification Value 2)',
