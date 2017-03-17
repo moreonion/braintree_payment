@@ -90,17 +90,12 @@ class CreditCardController extends \PaymentMethodController {
       $transaction_result->transaction->status === 'submitted_for_settlement')
     {
       $payment->setStatus(new \PaymentStatusItem(PAYMENT_STATUS_SUCCESS));
-      $this->entity_save('payment', $payment);
-
-      $params = array(
-        'pid'       => $payment->pid,
+      $payment->braintree = [
         'braintree_id' => $transaction_result->transaction->id,
         'type'      => $transaction_result->transaction->paymentInstrumentType,
         'plan_id'   => $plan_id,
-      );
-      if (!$this->drupal_write_record('braintree_payment', $params)) {
-        watchdog('braintree_payment', 'Record creation failed', WATCHDOG_ERROR);
-      }
+      ];
+      $this->entity_save('payment', $payment);
     }
     else {
       $payment->setStatus(new \PaymentStatusItem(PAYMENT_STATUS_FAILED));
