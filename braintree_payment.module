@@ -5,6 +5,8 @@
  * Defines Credit Card Controller Information and libraries.
  */
 
+use \Drupal\braintree_payment\CreditCardController;
+
 /**
  * Implements hook_payment_method_controller_info().
  */
@@ -34,4 +36,83 @@ function braintree_payment_libraries_info() {
     },
   );
   return $libraries;
+}
+
+/**
+ * Implements hook_entity_load().
+ */
+function braintree_payment_entity_load(array $entities, $entity_type) {
+  if ($entity_type == 'payment') {
+    $query = db_select('braintree_payment', 't')
+      ->fields('t')
+      ->condition('pid', array_keys($entities));
+    $result = $query->execute();
+    while ($data = $result->fetchAssoc()) {
+      $payment = $entities[$data['pid']];
+      $payment->braintree = [
+        'id' => $data['braintree_id'],
+        'type' => $data['type'],
+        'plan_id' => $data['plan_id'],
+      ];
+    }
+  }
+}
+
+/**
+ * Implements hook_[ENTITY_TYPE]_[ACTION]().
+ *
+ * Implements hook_payment_insert().
+ */
+function braintree_payment_payment_insert(Payment $payment) {
+  if ($payment->method->controller instanceof CreditCardController) {
+    $data = !empty($payment->braintree) ? $payment->braintree : [];
+    $data += [
+      'braintree_id' => '',
+      'type' => '',
+      'plan_id' => '',
+    ];
+    $data['pid'] = $payment->pid;
+    db_insert('braintree_payment')->fields($data)->execute();
+  }
+}
+
+/**
+ * Implements hook_[ENTITY_TYPE]_[ACTION]().
+ *
+ * Implements hook_payment_update().
+ */
+function braintree_payment_payment_update(Payment $payment) {
+  if ($payment->method->controller instanceof CreditCardController) {
+    $data = !empty($payment->braintree) ? $payment->braintree : [];
+    $data += [
+      'braintree_id' => '',
+      'type' => '',
+      'plan_id' => '',
+    ];
+    db_update('braintree_payment')
+     ->fields($data)
+     ->condition('pid', $payment->pid)
+     ->execute();
+  }
+}
+
+/**
+ * Implements hook_[ENTITY_TYPE]_[ACTION]().
+ *
+ * Implements hook_payment_delete().
+ */
+function braintree_payment_payment_delete(Payment $payment) {
+  db_delete('braintree_payment')->condition('pid', $payment->pid)->execute();
+}
+
+/**
+ * Implements hook_campaignion_logcrm_payment_event_data_alter().
+ */
+function braintree_payment_campaignion_logcrm_payment_event_data_alter(array &$data, Payment $payment) {
+  if ($payment->method->controller instanceof CreditCardController) {
+    $data['braintree_id'] = NULL;
+    if (!empty($payment->braintree['id'])) {
+      $data['braintree_id'] = $payment->braintree['id'];
+    }
+  }
 }
