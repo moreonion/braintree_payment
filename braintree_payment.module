@@ -111,8 +111,8 @@ function braintree_payment_payment_delete(Payment $payment) {
 function braintree_payment_campaignion_logrcm_payment_event_data_alter(array &$data, Payment $payment) {
   if ($payment->method->controller instanceof CreditCardController) {
     $data['braintree_id'] = NULL;
-    if (!empty($payment->braintree['id'])) {
-      $data['braintree_id'] = $payment->braintree['id'];
+    if (!empty($payment->braintree['braintree_id'])) {
+      $data['braintree_id'] = $payment->braintree['braintree_id'];
     }
   }
 }
