@@ -40,8 +40,7 @@ function braintree_payment_schema() {
       ),
     ),
     'primary key' => array('pid'),
-    'unique keys' => array(
-      'pid' => array('pid'),
+    'indexes' => array(
       'braintree_id' => array('braintree_id'),
     ),
   );
@@ -53,6 +52,15 @@ function braintree_payment_schema() {
  */
 function braintree_payment_update_last_removed() {
   return 7005;
+}
+
+/**
+ * Remove bogus unique indexes.
+ */
+function braintree_payment_update_7007() {
+  db_drop_unique_key('braintree_payment', 'pid');
+  db_drop_unique_key('braintree_payment', 'braintree_id');
+  db_add_index('braintree_payment', 'braintree_id', ['braintree_id']);
 }
 
 /**
