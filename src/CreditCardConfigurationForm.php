@@ -3,8 +3,10 @@
 namespace Drupal\braintree_payment;
 
 use \Braintree\Exception\Authentication;
+use \Braintree\Exception\NotFound;
 use \Braintree\ClientToken;
 use \Braintree\Configuration;
+use \Braintree\MerchantAccount;
 use \Drupal\payment_forms\MethodFormInterface;
 
 /**
@@ -16,7 +18,8 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
    * Returns a new configuration form.
    */
   public function form(array $form, array &$form_state, \PaymentMethod $method) {
-    $cd = $method->controller_data;
+    $cd = $method->controller_data
+      + $method->controller->controller_data_defaults;
 
     $library = libraries_detect('braintree-php');
 
@@ -60,6 +63,13 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
       '#default_value' => $cd['private_key'],
     );
 
+    $form['merchant_account_id'] = [
+      '#type' => 'textfield',
+      '#title' => t('Merchant account ID'),
+      '#description' => t("Payments are sent to this account. Leave empty to use the merchant's default account"),
+      '#default_value' => $cd['merchant_account_id'],
+    ];
+
     $map = $cd['field_map'];
     foreach (CreditCardForm::extraDataFields() as $name => $field) {
       $default = implode(', ', isset($map[$name]) ? $map[$name] : array());
@@ -99,6 +109,9 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
 
     try {
       ClientToken::generate();
+      if ($cd['merchant_account_id']) {
+        MerchantAccount::find($cd['merchant_account_id']);
+      }
     }
     catch (Authentication $e) {
       // Braintree doesn't give us any meaningful error msg or error code, so we just print that something's wrong.
@@ -106,6 +119,9 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
       form_error($element['public_key'], $msg);
       form_error($element['private_key']);
       form_error($element['merchant_id']);
+    }
+    catch (NotFound $e) {
+      form_error($element['merchant_account_id'], t('No such account for this braintree merchant.'));
     }
     catch (Exception $ex) {
       $values = array(

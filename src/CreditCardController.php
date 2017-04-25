@@ -12,6 +12,7 @@ class CreditCardController extends \PaymentMethodController {
   public $controller_data_defaults = array(
     'environment' => 'sandbox',
     'merchant_id' => '',
+    'merchant_account_id' => '',
     'private_key' => '',
     'public_key'  => '',
     'field_map' => [],
@@ -72,15 +73,18 @@ class CreditCardController extends \PaymentMethodController {
     $customer = $this->createCustomer($payment, $context);
     $this->setBraintreeSettings($cd['environment'], $cd['merchant_id'], $cd['public_key'], $cd['private_key']);
 
-
-    $transaction_result = \Braintree\Transaction::sale([
+    $data = [
       'amount' => $payment->totalAmount(0),
       'paymentMethodNonce' => $payment->method_data['braintree-payment-nonce'],
       'customer' => $customer,
       'options' => [
         'submitForSettlement' => TRUE,
       ],
-    ]);
+    ];
+    if ($cd['merchant_account_id']) {
+      $data['merchantAccountId'] = $cd['merchant_account_id'];
+    }
+    $transaction_result = \Braintree\Transaction::sale($data);
 
     if ($transaction_result->success &&
       $transaction_result->transaction->status === 'submitted_for_settlement')
