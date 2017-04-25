@@ -1,12 +1,11 @@
 <?php
 
-use \Braintree\Exception;
+namespace Drupal\braintree_payment;
+
 use \Braintree\Exception\Authentication;
 use \Braintree\ClientToken;
 use \Braintree\Configuration;
 use \Drupal\payment_forms\MethodFormInterface;
-
-namespace Drupal\braintree_payment;
 
 /**
  * Defines a configuration form for the Braintree payment method.
@@ -93,20 +92,15 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
 
     // No special key-format, no further validation required.
     // Try to contact Braintree to see if the credentials are correct.
-    \Braintree\Configuration::environment($cd['environment']);
-    \Braintree\Configuration::merchantId($cd['merchant_id']);
-    \Braintree\Configuration::publicKey($cd['public_key']);
-    \Braintree\Configuration::privateKey($cd['private_key']);
+    Configuration::environment($cd['environment']);
+    Configuration::merchantId($cd['merchant_id']);
+    Configuration::publicKey($cd['public_key']);
+    Configuration::privateKey($cd['private_key']);
 
     try {
-      \Braintree\ClientToken::generate();
+      ClientToken::generate();
     }
-    catch (\Braintree\Authentication $ex) {
-      $values = array(
-        '@status' => $ex->getCode(),
-        '@message' => $ex->getMessage(),
-      );
-
+    catch (Authentication $e) {
       // Braintree doesn't give us any meaningful error msg or error code, so we just print that something's wrong.
       $msg = t('Unable to contact Braintree using this set of keys. Please check if your Merchant ID, Public and Private key are correct.');
       form_error($element['public_key'], $msg);
