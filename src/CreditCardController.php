@@ -1,9 +1,9 @@
 <?php
 
-use Braintree\Configuration;
-use Braintree\Transaction;
-
 namespace Drupal\braintree_payment;
+
+use \Braintree\Configuration;
+use \Braintree\Transaction;
 
 /**
  * Defines the controller class of the Braintree payment method.
@@ -65,13 +65,12 @@ class CreditCardController extends \PaymentMethodController {
    */
   public function execute(\Payment $payment) {
     $this->libraries_load('braintree-php');
-    $cd = $payment->method->controller_data + $this->controller_data_defaults;
 
     $context = $payment->contextObj;
     $plan_id = NULL;
 
     $customer = $this->createCustomer($payment, $context);
-    $this->setBraintreeSettings($cd['environment'], $cd['merchant_id'], $cd['public_key'], $cd['private_key']);
+    $account_id = $this->setBraintreeSettings($payment);
 
     $data = [
       'amount' => $payment->totalAmount(0),
@@ -81,8 +80,8 @@ class CreditCardController extends \PaymentMethodController {
         'submitForSettlement' => TRUE,
       ],
     ];
-    if ($cd['merchant_account_id']) {
-      $data['merchantAccountId'] = $cd['merchant_account_id'];
+    if ($account_id) {
+      $data['merchantAccountId'] = $account_id;
     }
     $transaction_result = \Braintree\Transaction::sale($data);
 
@@ -167,11 +166,13 @@ class CreditCardController extends \PaymentMethodController {
   /**
    * Sets the braintree configuration variables.
    */
-  private function setBraintreeSettings($env, $merch, $pub, $priv) {
-    \Braintree\Configuration::environment($env);
-    \Braintree\Configuration::merchantId($merch);
-    \Braintree\Configuration::publicKey($pub);
-    \Braintree\Configuration::privateKey($priv);
+  public function setBraintreeSettings(\Payment $payment) {
+    $cd = $payment->method->controller_data + $this->controller_data_defaults;
+    Configuration::environment($cd['environment']);
+    Configuration::merchantId($cd['merchant_id']);
+    Configuration::publicKey($cd['public_key']);
+    Configuration::privateKey($cd['private_key']);
+    return $cd['merchant_account_id'];
   }
 
 }

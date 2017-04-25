@@ -1,16 +1,16 @@
 <?php
 
+namespace Drupal\braintree_payment;
+
 use \Braintree\ClientToken;
 use \Braintree\Configuration;
-use \Drupal\payment_forms\CreditCardForm;
-
-namespace Drupal\braintree_payment;
+use \Drupal\payment_forms\CreditCardForm as _CreditCardForm;
 
 /**
  * @file
  * Defines the Credit Card Form on the clientside.
  */
-class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
+class CreditCardForm extends _CreditCardForm {
   static protected $issuers = array(
     'visa'           => 'Visa',
     'mastercard'     => 'MasterCard',
@@ -27,20 +27,6 @@ class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
   );
 
   /**
-   * Generates a Braintree Client Token.
-   */
-  public function generateToken($env, $merchant, $pubkey, $privkey) {
-    libraries_load('braintree-php');
-
-    \Braintree\Configuration::environment($env);
-    \Braintree\Configuration::merchantId($merchant);
-    \Braintree\Configuration::publicKey($pubkey);
-    \Braintree\Configuration::privateKey($privkey);
-
-    return \Braintree\ClientToken::generate();
-  }
-
-  /**
    * Defines the form that shall be rendered.
    */
   public function form(array $form, array &$form_state, \Payment $payment) {
@@ -50,21 +36,19 @@ class CreditCardForm extends \Drupal\payment_forms\CreditCardForm {
       '#type' => 'hidden',
       '#default_value' => '',
     );
-
-    $method = &$payment->method;
+    $account_id = $payment->method->controller->setBraintreeSettings($payment);
 
     // Generate a token for the current client.
-    $payment_token = $this->generateToken(
-      'sandbox',
-      $method->controller_data['merchant_id'],
-      $method->controller_data['public_key'],
-      $method->controller_data['private_key']
-    );
+    $data = [];
+    if ($account_id) {
+      $data['merchantAccountId'] = $account_id;
+    }
+    $payment_token = ClientToken::generate($data);
 
     // Add token & public key to settings for clientside.
-    $settings['braintree_payment'][$method->pmid] = array(
+    $settings['braintree_payment'][$payment->method->pmid] = array(
       'payment_token' => $payment_token,
-      'pmid' => $method->pmid,
+      'pmid' => $payment->method->pmid,
     );
 
     // Attach client side JS files and settings to javascript settings variable.
