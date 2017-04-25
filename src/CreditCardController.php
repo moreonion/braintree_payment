@@ -64,18 +64,14 @@ class CreditCardController extends \PaymentMethodController {
    */
   public function execute(\Payment $payment) {
     $this->libraries_load('braintree-php');
+    $cd = $payment->method->controller_data + $this->controller_data_defaults;
 
     $context = $payment->contextObj;
     $plan_id = NULL;
 
     $customer = $this->createCustomer($payment, $context);
+    $this->setBraintreeSettings($cd['environment'], $cd['merchant_id'], $cd['public_key'], $cd['private_key']);
 
-    $this->setBraintreeSettings(
-      $payment->method->controller_data['environment'],
-      $payment->method->controller_data['merchant_id'],
-      $payment->method->controller_data['public_key'],
-      $payment->method->controller_data['private_key']
-    );
 
     $transaction_result = \Braintree\Transaction::sale([
       'amount' => $payment->totalAmount(0),
