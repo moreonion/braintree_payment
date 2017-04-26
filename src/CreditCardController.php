@@ -15,7 +15,7 @@ class CreditCardController extends \PaymentMethodController {
     'merchant_account_id' => '',
     'private_key' => '',
     'public_key'  => '',
-    'field_map' => [],
+    'billing_data' => [],
     'enable_recurrent_payments' => 0,
   );
 
@@ -69,13 +69,11 @@ class CreditCardController extends \PaymentMethodController {
     $context = $payment->contextObj;
     $plan_id = NULL;
 
-    $customer = $this->createCustomer($payment, $context);
     $account_id = $this->setBraintreeSettings($payment);
-
     $data = [
-      'amount' => $payment->totalAmount(0),
+      'amount' => $payment->totalAmount(TRUE),
       'paymentMethodNonce' => $payment->method_data['braintree-payment-nonce'],
-      'customer' => $customer,
+      'billing' => $payment->method_data['billing_data'],
       'options' => [
         'submitForSettlement' => TRUE,
       ],

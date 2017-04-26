@@ -70,13 +70,49 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
       '#default_value' => $cd['merchant_account_id'],
     ];
 
-    $map = $cd['field_map'];
+    $display_options = array(
+      'ifnotset' => t('Show field if it is not available from the context.'),
+      'always' => t('Always show the field - prefill with context values.'),
+      'hidden' => t("Don't display, use values from context if available."),
+    );
+
+    // Allow configuration for billing data fields.
+    $stored = $cd['billing_data'];
     foreach (CreditCardForm::extraDataFields() as $name => $field) {
-      $default = implode(', ', isset($map[$name]) ? $map[$name] : array());
-      $form['field_map'][$name] = array(
-        '#type' => 'textfield',
+      $defaults = isset($stored[$name]) ? $stored[$name] : [];
+      $defaults += [
+        'display' => 'ifnotset',
+        'keys' => [$name],
+        'mandatory' => FALSE,
+      ];
+      $form['billing_data'][$name] = [
+        '#type' => 'fieldset',
         '#title' => $field['#title'],
-        '#default_value' => $default,
+      ];
+
+      $id = drupal_html_id('controller_data_' . $name);
+      $form['billing_data'][$name]['display'] = array(
+        '#type' => 'select',
+        '#title' => t('Display'),
+        '#options' => $display_options,
+        '#default_value' => $defaults['display'],
+        '#id' => $id,
+      );
+      $form['billing_data'][$name]['required'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Required'),
+        '#states' => array(
+          'disabled' => array(
+            "#$id" => array('value' => 'hidden'),
+          ),
+        ),
+        '#default_value' => $defaults['required'],
+      );
+      $form['billing_data'][$name]['keys'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Context keys'),
+        '#description' => t('When building the form these (comma separated) keys are used to get a (default) value for this field from the Payment Context.'),
+        '#default_value' => implode(', ', $defaults['keys']),
       );
     }
 
@@ -88,12 +124,8 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
    */
   public function validate(array $element, array &$form_state, \PaymentMethod $method) {
     $cd = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
-    foreach ($cd['field_map'] as $k => &$v) {
-      $v = array_filter(array_map('trim', explode(',', $v)));
-    }
 
     $library = libraries_detect('braintree-php');
-
     if (empty($library['installed'])) {
       drupal_set_message($library['error message'], 'error', FALSE);
     }
@@ -133,6 +165,11 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
       form_error($element['private_key'], $msg);
       form_error($element['public_key']);
       form_error($element['private_key']);
+    }
+
+    foreach ($cd['billing_data'] as &$field) {
+      $field += ['keys' => ''];
+      $field['keys'] = array_map('trim', explode(',', $field['keys']));
     }
 
     $method->controller_data = $cd;

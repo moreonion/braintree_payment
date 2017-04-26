@@ -69,21 +69,27 @@ class CreditCardForm extends _CreditCardForm {
         'group' => JS_DEFAULT,
       ));
 
-    $ed = array(
-      '#type' => 'container',
-      '#attributes' => array('class' => array('braintree-extra-data')),
-    ) + $this->mappedFields($payment);
-
-    if (!isset($ed['name']) && isset($ed['first_name'])
-      && isset($ed['last_name'])) {
-      $ed['name'] = $ed['first_name'];
-      $ed['name']['#value'] .= ' ' . $ed['last_name']['#value'];
-      $ed['name']['#attributes']['data-braintree'] = 'name';
+    $data = $payment->method->controller_data['billing_data'];
+    $default = ['keys' => [], 'required' => FALSE];
+    $context = $payment->contextObj;
+    $bd = static::extraDataFields();
+    foreach ($bd as $name => &$field) {
+      $config = isset($data[$name]) ? $data[$name] + $default : $default;
+      $field['#controller_required'] = $data[$name]['required'];
+      if ($context) {
+        foreach ($config['keys'] as $key) {
+          if ($value = $context->value($key)) {
+            $field['#default_value'] = $value;
+            break;
+          }
+        }
+      }
+      $field['#access'] = $this->shouldDisplay($field, $config['display']);
     }
-    unset($ed['first_name']);
-    unset($ed['last_name']);
 
-    $form['extra_data'] = $ed;
+    $form['billing_data'] = $bd + [
+      '#type' => 'container',
+    ];
     return $form;
   }
 
@@ -94,50 +100,86 @@ class CreditCardForm extends _CreditCardForm {
     // Braintree takes care of the real validation, client-side.
     $values = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
     $payment->method_data['braintree-payment-nonce'] = $values['braintree-payment-nonce'];
-  }
 
-  /**
-   * Defines the mapped fields.
-   */
-  protected function mappedFields(\Payment $payment) {
-    $fields = array();
-    $field_map = $payment->method->controller_data['field_map'];
-    foreach (static::extraDataFields() as $name => $field) {
-      $map = isset($field_map[$name]) ? $field_map[$name] : array();
-      foreach ($map as $key) {
-        if ($value = $payment->contextObj->value($key)) {
-          $field['#value'] = $value;
-          $fields[$name] = $field;
-        }
+    $bd = [];
+    foreach ($element['billing_data'] as $field) {
+      if (!empty($field['#controller_required']) && empty($field['#value'])) {
+        form_error($field, t('!name field is required.', array('!name' => $field['#title'])));
+      }
+      // Only pass non-empty fields in method data.
+      if (!empty($field['#value'])) {
+        $bd[$field['#braintree_field']] = $field['#value'];
       }
     }
-    return $fields;
+    $payment->method_data['billing_data'] = $bd;
   }
 
   /**
    * Defines additional data fields.
+   *
+   * @return array
+   *   A form-API style array defining fields that map to the braintree billing
+   *   data using the #braintree_field attribute.
    */
   public static function extraDataFields() {
-    $fields = array();
-    $f = array(
-      'name' => t('Name'),
-      'first_name' => t('First name'),
-      'last_name' => t('Last name'),
-      'address_line1' => t('Address line 1'),
-      'address_line2' => t('Address line 2'),
-      'address_city' => t('City'),
-      'address_state' => t('State'),
-      'address_zip' => t('Postal code'),
-      'address_country' => t('Country'),
-    );
-    foreach ($f as $name => $title) {
-      $fields[$name] = array(
-        '#type' => 'hidden',
-        '#title' => $title,
-        '#attributes' => array('data-braintree' => $name),
-      );
-    }
+    require_once DRUPAL_ROOT . '/includes/locale.inc';
+    $fields['first_name'] = [
+      '#type' => 'textfield',
+      '#title' => t('First name'),
+      '#braintree_field' => 'firstName',
+    ];
+
+    $fields['last_name'] = [
+      '#type' => 'textfield',
+      '#title' => t('Last name'),
+      '#braintree_field' => 'lastName',
+    ];
+
+    $fields['company'] = [
+      '#type' => 'textfield',
+      '#title' => t('Company'),
+      '#braintree_field' => 'company',
+    ];
+
+    $fields['street_address'] = [
+      '#type' => 'textfield',
+      '#title' => t('Address line 1'),
+      '#braintree_field' => 'streetAddress',
+    ];
+
+    $fields['address_line2'] = [
+      '#type' => 'textfield',
+      '#title' => t('Address line 2'),
+      '#braintree_field' => 'extendedAddress',
+    ];
+
+    $fields['country'] = [
+      '#type' => 'select',
+      '#options' => country_get_list(),
+      '#title' => t('Country'),
+      '#braintree_field' => 'countryCodeAlpha2',
+    ];
+
+    $fields['postcode'] = [
+      '#type' => 'textfield',
+      '#title' => t('Postal code'),
+      '#braintree_field' => 'postalCode',
+    ];
+
+    $fields['city'] = [
+      '#type' => 'textfield',
+      '#title' => t('City/Locality'),
+      '#braintree_field' => 'locality',
+    ];
+
     return $fields;
+  }
+
+  /**
+   * Check whether a specific field should be displayed.
+   */
+  protected function shouldDisplay($field, $display) {
+    return ($display == 'always') || (empty($field['#default_value']) && $display == 'ifnotset');
   }
 
 }
