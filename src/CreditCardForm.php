@@ -111,7 +111,18 @@ class CreditCardForm extends _CreditCardForm {
         $bd[$field['#braintree_field']] = $field['#value'];
       }
     }
-    $payment->method_data['billing_data'] = $bd;
+    // Always provide at least an empty address.
+    $payment->method_data['billing_data'] = $bd + [
+      'company' => '',
+      'countryCodeAlpha2' => '',
+      'extendedAddress' => '',
+      'firstName' => '',
+      'lastName' => '',
+      'locality' => '',
+      'postalCode' => '',
+      'region' => '',
+      'streetAddress' => '',
+    ];
   }
 
   /**
@@ -170,6 +181,12 @@ class CreditCardForm extends _CreditCardForm {
       '#type' => 'textfield',
       '#title' => t('City/Locality'),
       '#braintree_field' => 'locality',
+    ];
+
+    $fields['region'] = [
+      '#type' => 'textfield',
+      '#title' => t('Region/State'),
+      '#braintree_field' => 'region',
     ];
 
     return $fields;
