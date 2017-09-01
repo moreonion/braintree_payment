@@ -11,26 +11,15 @@ use \Drupal\payment_forms\CreditCardForm as _CreditCardForm;
  * Defines the Credit Card Form on the clientside.
  */
 class CreditCardForm extends _CreditCardForm {
-  static protected $issuers = array(
-    'visa'           => 'Visa',
-    'mastercard'     => 'MasterCard',
-    'discover'       => 'Discover',
-    'diners_club'    => 'Diners Club'
-  );
-  static protected $cvcLabel = array(
-    'visa'           => 'CVV2 (Card Verification Value 2)',
-    'amex'           => 'CID (Card Identification Number)',
-    'mastercard'     => 'CVC2 (Card Validation Code 2)',
-    'jcb'            => 'CSC (Card Security Code)',
-    'discover'       => 'CID (Card Identification Number)',
-    'diners_club'    => 'CSC (Card Security Code)',
-  );
+  static protected $issuers = [];
+  static protected $cvcLabel = [];
 
   /**
    * Defines the form that shall be rendered.
    */
   public function form(array $form, array &$form_state, \Payment $payment) {
     $form = parent::form($form, $form_state, $payment);
+    unset($form['issuer']);
 
     $form['braintree-payment-nonce'] = array(
       '#type' => 'hidden',
