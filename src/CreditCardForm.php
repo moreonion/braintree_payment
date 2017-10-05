@@ -59,12 +59,12 @@ class CreditCardForm extends _CreditCardForm {
       ));
 
     $data = $payment->method->controller_data['billing_data'];
-    $default = ['keys' => [], 'required' => FALSE];
+    $default = ['keys' => [], 'required' => FALSE, 'display' => 'hidden'];
     $context = $payment->contextObj;
     $bd = static::extraDataFields();
     foreach ($bd as $name => &$field) {
       $config = isset($data[$name]) ? $data[$name] + $default : $default;
-      $field['#controller_required'] = $data[$name]['required'];
+      $field['#controller_required'] = $config['required'];
       if ($context) {
         foreach ($config['keys'] as $key) {
           if ($value = $context->value($key)) {
