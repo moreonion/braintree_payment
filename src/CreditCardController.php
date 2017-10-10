@@ -50,7 +50,7 @@ class CreditCardController extends \PaymentMethodController {
     parent::validate($payment, $method, $strict);
 
     if (!($library = libraries_detect('braintree-php')) || empty($library['installed'])) {
-      throw new \PaymentValidationException(t('The braintree-php library could no tbe found.'));
+      throw new \PaymentValidationException(t('The braintree-php library could not be found.'));
     }
 
     if ($payment->contextObj && ($interval = $payment->contextObj->value('donation_interval'))) {
