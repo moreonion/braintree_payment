@@ -44,7 +44,7 @@
     braintree.client.create({
       authorization: this.settings[pmid].payment_token
     }, function(clientErr, clientInstance) {
-      if(clientErr) {
+      if (clientErr) {
         var detail_msg = clientErr.details.originalError.error.message;
 
         if(detail_msg.length > 0) {
