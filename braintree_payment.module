@@ -50,7 +50,7 @@ function braintree_payment_entity_load(array $entities, $entity_type) {
     while ($data = $result->fetchAssoc()) {
       $payment = $entities[$data['pid']];
       $payment->braintree = [
-        'id' => $data['braintree_id'],
+        'braintree_id' => $data['braintree_id'],
         'type' => $data['type'],
         'plan_id' => $data['plan_id'],
       ];

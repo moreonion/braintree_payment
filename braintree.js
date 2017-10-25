@@ -18,17 +18,17 @@
   Drupal.behaviors.braintree_payment.validateHandler = function(pmid, $method, submitter) {
     this.form_id = $method.closest('form').attr('id');
 
-    var ccn_id = '[id$=' + pmid + '-credit-card-number]';
-    var cvv_id = '[id$=' + pmid + '-secure-code]';
+    var ccn_name = '[name$="['+ pmid + '][credit_card_number]"]';
+    var cvv_name = '[name$="['+ pmid + '][secure_code]"]';
 
-    var ccn = $method.find(ccn_id)[0].value;
-    var cvv = $method.find(cvv_id)[0].value;
+    var ccn = $method.find(ccn_name)[0].value;
+    var cvv = $method.find(cvv_name)[0].value;
 
-    var expiry_month_id = '[id$=' + pmid + '-expiry-date-month]';
-    var expiry_year_id = '[id$=' + pmid + '-expiry-date-year]';
+    var expiry_month_name = '[name$="[' + pmid + '][expiry_date][month]"]';
+    var expiry_year_name = '[name$="[' + pmid + '][expiry_date][year]"]';
 
-    var expiry_month = $method.find(expiry_month_id)[0];
-    var expiry_year = $method.find(expiry_year_id)[0];
+    var expiry_month = $method.find(expiry_month_name)[0];
+    var expiry_year = $method.find(expiry_year_name)[0];
     var expiry_date = expiry_month.value + '/' + expiry_year.value;
 
     $('.mo-dialog-wrapper').addClass('visible');
@@ -81,10 +81,10 @@
         expiry_month = ''
         expiry_year = ''
         expiry_date = ''
-        $(ccn_id).val('');
-        $(cvv_id).val('');
-        $(expiry_month_id).val('');
-        $(expiry_year_id).val('');
+        $(ccn_name).val('');
+        $(cvv_name).val('');
+        $(expiry_month_name).val('');
+        $(expiry_year_name).val('');
 
         // Submit form
         submitter.ready();
