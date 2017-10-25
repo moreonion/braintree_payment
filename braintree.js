@@ -44,6 +44,19 @@
     braintree.client.create({
       authorization: this.settings[pmid].payment_token
     }, function(clientErr, clientInstance) {
+      if(clientErr) {
+        var detail_msg = clientErr.details.originalError.error.message;
+
+        if(detail_msg.length > 0) {
+          Drupal.behaviors.braintree_payment.errorHandler(detail_msg);
+        } else {
+          Drupal.behaviors.braintree_payment.errorHandler(requestErr);
+        }
+
+        submitter.error();
+        return;
+      }
+
       var data = {
         creditCard: {
           number: ccn,
