@@ -5,7 +5,7 @@
  * Defines Credit Card Controller Information and libraries.
  */
 
-use \Drupal\braintree_payment\CreditCardController;
+use Drupal\braintree_payment\CreditCardController;
 
 /**
  * Implements hook_payment_method_controller_info().
@@ -50,7 +50,7 @@ function braintree_payment_entity_load(array $entities, $entity_type) {
     while ($data = $result->fetchAssoc()) {
       $payment = $entities[$data['pid']];
       $payment->braintree = [
-        'id' => $data['braintree_id'],
+        'braintree_id' => $data['braintree_id'],
         'type' => $data['type'],
         'plan_id' => $data['plan_id'],
       ];
@@ -59,8 +59,6 @@ function braintree_payment_entity_load(array $entities, $entity_type) {
 }
 
 /**
- * Implements hook_[ENTITY_TYPE]_[ACTION]().
- *
  * Implements hook_payment_insert().
  */
 function braintree_payment_payment_insert(Payment $payment) {
@@ -77,8 +75,6 @@ function braintree_payment_payment_insert(Payment $payment) {
 }
 
 /**
- * Implements hook_[ENTITY_TYPE]_[ACTION]().
- *
  * Implements hook_payment_update().
  */
 function braintree_payment_payment_update(Payment $payment) {
@@ -90,15 +86,13 @@ function braintree_payment_payment_update(Payment $payment) {
       'plan_id' => '',
     ];
     db_update('braintree_payment')
-     ->fields($data)
-     ->condition('pid', $payment->pid)
-     ->execute();
+      ->fields($data)
+      ->condition('pid', $payment->pid)
+      ->execute();
   }
 }
 
 /**
- * Implements hook_[ENTITY_TYPE]_[ACTION]().
- *
  * Implements hook_payment_delete().
  */
 function braintree_payment_payment_delete(Payment $payment) {
