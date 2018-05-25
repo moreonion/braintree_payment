@@ -102,7 +102,7 @@ function braintree_payment_payment_delete(Payment $payment) {
 /**
  * Implements hook_campaignion_logcrm_payment_event_data_alter().
  */
-function braintree_payment_campaignion_logrcm_payment_event_data_alter(array &$data, Payment $payment) {
+function braintree_payment_campaignion_logcrm_payment_event_data_alter(array &$data, Payment $payment) {
   if ($payment->method->controller instanceof CreditCardController) {
     $data['braintree_id'] = NULL;
     if (!empty($payment->braintree['braintree_id'])) {
