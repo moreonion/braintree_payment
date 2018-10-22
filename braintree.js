@@ -2,47 +2,35 @@
   Drupal.behaviors.braintree_payment = {};
   Drupal.behaviors.braintree_payment.attach = function(context, settings) {
     if($('input[name$="braintree-payment-nonce]"]', context).length > 0) {
-      this.settings = settings.braintree_payment;
       if (!Drupal.payment_handler) {
         Drupal.payment_handler = {};
       }
-
-      for (var pmid in this.settings) {
+      var self = this;
+      for (var key in settings.braintree_payment) {
+        var pmid = settings.braintree_payment[key].pmid;
         Drupal.payment_handler[pmid] = function(pmid, $method, submitter) {
-          Drupal.behaviors.braintree_payment.validateHandler(pmid, $method, submitter);
+          self.validateHandler(settings.braintree_payment['pmid_' + pmid], $method, submitter);
         };
       }
     }
   };
 
-  Drupal.behaviors.braintree_payment.validateHandler = function(pmid, $method, submitter) {
+  Drupal.behaviors.braintree_payment.validateHandler = function(settings, $method, submitter) {
     this.form_id = $method.closest('form').attr('id');
 
-    var ccn_name = '[name$="['+ pmid + '][credit_card_number]"]';
-    var cvv_name = '[name$="['+ pmid + '][secure_code]"]';
-
-    var ccn = $method.find(ccn_name)[0].value;
-    var cvv = $method.find(cvv_name)[0].value;
-
-    var expiry_month_name = '[name$="[' + pmid + '][expiry_date][month]"]';
-    var expiry_year_name = '[name$="[' + pmid + '][expiry_date][year]"]';
-
-    var expiry_month = $method.find(expiry_month_name)[0];
-    var expiry_year = $method.find(expiry_year_name)[0];
-    var expiry_date = expiry_month.value + '/' + expiry_year.value;
+    var $ccn = $method.find('[name$="[credit_card_number]"]');
+    var $cvv = $method.find('[name$="[secure_code]"]');
+    var $expiry_month = $method.find('[name$="[expiry_date][month]"]');
+    var $expiry_year = $method.find('[name$="[expiry_date][year]"]');
+    var $nonce = $method.find('[name$="[braintree-payment-nonce]"]');
 
     $('.mo-dialog-wrapper').addClass('visible');
     if (typeof Drupal.clientsideValidation !== 'undefined') {
       $('#clientsidevalidation-' + this.form_id + '-errors ul').empty();
     }
 
-    var getField = function(name) {
-      if (name instanceof Array) { name = name.join(']['); }
-      return $method.find('[name$="[' + name + ']"]');
-    };
-
     braintree.client.create({
-      authorization: this.settings[pmid].payment_token
+      authorization: settings.payment_token
     }, function(clientErr, clientInstance) {
       if (clientErr) {
         var detail_msg = clientErr.details.originalError.error.message;
@@ -59,9 +47,9 @@
 
       var data = {
         creditCard: {
-          number: ccn,
-          cvv: cvv,
-          expirationDate: expiry_date
+          number: $ccn.val(),
+          cvv: $cvv.val(),
+          expirationDate: $expiry_month.val() + '/' + $expiry_year.val()
         }
       };
 
@@ -86,18 +74,13 @@
         }
 
         // set the nonce we received
-        getField(pmid + '][braintree-payment-nonce').val(response.creditCards[0].nonce);
+        $nonce.val(response.creditCards[0].nonce);
 
         // Now get rid of all the creditcard data
-        ccn = '';
-        cvv = '';
-        expiry_month = ''
-        expiry_year = ''
-        expiry_date = ''
-        $(ccn_name).val('');
-        $(cvv_name).val('');
-        $(expiry_month_name).val('');
-        $(expiry_year_name).val('');
+        $ccn.val('');
+        $cvv.val('');
+        $expiry_month.val('');
+        $expiry_year.val('');
 
         // Submit form
         submitter.ready();
