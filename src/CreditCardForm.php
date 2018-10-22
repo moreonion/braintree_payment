@@ -35,28 +35,28 @@ class CreditCardForm extends _CreditCardForm {
     $payment_token = ClientToken::generate($data);
 
     // Add token & public key to settings for clientside.
-    $settings['braintree_payment'][$payment->method->pmid] = array(
+    $settings['braintree_payment']['pmid_' . $payment->method->pmid] = array(
       'payment_token' => $payment_token,
       'pmid' => $payment->method->pmid,
     );
 
     // Attach client side JS files and settings to javascript settings variable.
-    drupal_add_js($settings, 'setting');
-    drupal_add_js('https://js.braintreegateway.com/web/3.7.0/js/client.min.js',
-      array(
-        'type' => 'external',
-        'group' => JS_LIBRARY,
-      ));
-    drupal_add_js('https://js.braintreegateway.com/web/3.7.0/js/hosted-fields.min.js',
-      array(
-        'type' => 'external',
-        'group' => JS_LIBRARY,
-      ));
-    drupal_add_js(drupal_get_path('module', 'braintree_payment') . '/braintree.js',
-      array(
-        'type' => 'file',
-        'group' => JS_DEFAULT,
-      ));
+    $form['#attached']['js'][] = [
+      'type' => 'setting',
+      'data' => $settings,
+    ];
+    $form['#attached']['js']['https://js.braintreegateway.com/web/3.7.0/js/client.min.js'] = [
+      'type' => 'external',
+      'group' => JS_LIBRARY,
+    ];
+    $form['#attached']['js']['https://js.braintreegateway.com/web/3.7.0/js/hosted-fields.min.js'] = [
+      'type' => 'external',
+      'group' => JS_LIBRARY,
+    ];
+    $form['#attached']['js'][drupal_get_path('module', 'braintree_payment') . '/braintree.js'] = [
+      'type' => 'file',
+      'group' => JS_DEFAULT,
+    ];
 
     $data = $payment->method->controller_data['billing_data'];
     $default = ['keys' => [], 'required' => FALSE, 'display' => 'hidden'];
