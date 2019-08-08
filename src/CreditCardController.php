@@ -53,9 +53,11 @@ class CreditCardController extends \PaymentMethodController {
       throw new \PaymentValidationException(t('The braintree-php library could not be found.'));
     }
 
-    if ($payment->contextObj && ($interval = $payment->contextObj->value('donation_interval'))) {
-      if (empty($method->controller_data['enable_recurrent_payments']) && in_array($interval, ['m', 'y'])) {
-        throw new \PaymentValidationException(t('Recurrent payments are disabled for this payment method.'));
+    if (empty($method->controller_data['enable_recurrent_payments'])) {
+      foreach ($payment->line_items as $line_item) {
+        if (!empty($line_item->recurrence) && !empty($line_item->recurrence->interval_unit)) {
+          throw new \PaymentValidationException(t('Recurrent payments are disabled for this payment method.'));
+        }
       }
     }
   }
