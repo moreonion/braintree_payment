@@ -68,7 +68,6 @@ class CreditCardController extends \PaymentMethodController {
   public function execute(\Payment $payment) {
     $this->libraries_load('braintree-php');
 
-    $context = $payment->contextObj;
     $plan_id = NULL;
 
     $account_id = $this->setBraintreeSettings($payment);
