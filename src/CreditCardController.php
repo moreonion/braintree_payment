@@ -152,17 +152,6 @@ class CreditCardController extends \PaymentMethodController {
   }
 
   /**
-   * Creates a new customer.
-   */
-  private function createCustomer(\Payment $payment, $context) {
-    return array(
-      'firstName' => $context->value('first_name'),
-      'lastName' => $context->value('last_name'),
-      'email' => $context->value('email'),
-    );
-  }
-
-  /**
    * Sets the braintree configuration variables.
    */
   public function setBraintreeSettings(\Payment $payment) {
