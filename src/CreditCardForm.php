@@ -21,6 +21,7 @@ class CreditCardForm extends _CreditCardForm {
    * Defines the form that shall be rendered.
    */
   public function form(array $form, array &$form_state, \Payment $payment) {
+    $method = $payment->method;
     $form = parent::form($form, $form_state, $payment);
     unset($form['issuer']);
 
@@ -28,19 +29,11 @@ class CreditCardForm extends _CreditCardForm {
       '#type' => 'hidden',
       '#default_value' => '',
     );
-    $account_id = $payment->method->controller->setBraintreeSettings($payment);
-
-    // Generate a token for the current client.
-    $data = [];
-    if ($account_id) {
-      $data['merchantAccountId'] = $account_id;
-    }
-    $payment_token = ClientToken::generate($data);
 
     // Add token & public key to settings for clientside.
-    $settings['braintree_payment']['pmid_' . $payment->method->pmid] = array(
-      'payment_token' => $payment_token,
-      'pmid' => $payment->method->pmid,
+    $settings['braintree_payment']['pmid_' . $method->pmid] = array(
+      'payment_token' => $method->controller->getClientToken($method),
+      'pmid' => $method->pmid,
     );
 
     // Attach client side JS files and settings to javascript settings variable.
@@ -50,7 +43,7 @@ class CreditCardForm extends _CreditCardForm {
     ];
     $form['#attached']['js'] += static::scriptAttachments();
 
-    $data = $payment->method->controller_data['billing_data'];
+    $data = $method->controller_data['billing_data'];
     $default = ['keys' => [], 'required' => FALSE, 'display' => 'hidden'];
     $context = $payment->contextObj;
     $bd = static::extraDataFields();

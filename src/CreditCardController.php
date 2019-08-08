@@ -2,7 +2,7 @@
 
 namespace Drupal\braintree_payment;
 
-use \Braintree\Configuration;
+use \Braintree\Gateway;
 use \Braintree\Transaction;
 
 /**
@@ -63,6 +63,33 @@ class CreditCardController extends \PaymentMethodController {
   }
 
   /**
+   * Create a Braintree Gateway instance for interacting with the API.
+   *
+   * @return \Braintree\Gateway
+   *   A newly created Braintree gateway instance.
+   */
+  public function createGateway(\PaymentMethod $method) {
+    $cd = $method->controller_data + $this->controller_data_defaults;
+    return new Gateway([
+      'environment' => $cd['environment'],
+      'merchantId' => $cd['merchant_id'],
+      'publicKey' => $cd['public_key'],
+      'privateKey' => $cd['private_key'],
+    ]);
+  }
+
+  /**
+   * Request a new client token.
+   */
+  public function getClientToken(\PaymentMethod $method) {
+    $data = [];
+    if (!empty($method->controller_data['merchant_account_id'])) {
+      $data['merchantAccountId'] = $method->controller_data['merchant_account_id'];
+    }
+    return $this->createGateway($method)->clientToken()->generate($data);
+  }
+
+  /**
    * Executes a transaction.
    */
   public function execute(\Payment $payment) {
@@ -70,7 +97,6 @@ class CreditCardController extends \PaymentMethodController {
 
     $plan_id = NULL;
 
-    $account_id = $this->setBraintreeSettings($payment);
     $data = [
       'amount' => $payment->totalAmount(TRUE),
       'paymentMethodNonce' => $payment->method_data['braintree-payment-nonce'],
@@ -79,10 +105,11 @@ class CreditCardController extends \PaymentMethodController {
         'submitForSettlement' => TRUE,
       ],
     ];
-    if ($account_id) {
-      $data['merchantAccountId'] = $account_id;
+    if (!empty($payment->method->controller_data['merchant_account_id'])) {
+      $data['merchantAccountId'] = $payment->method->controller_data['merchant_account_id'];
     }
-    $transaction_result = \Braintree\Transaction::sale($data);
+    $transaction_result = $this->createGateway($payment->method)->transaction()
+      ->sale($data);
 
     if ($transaction_result->success &&
       $transaction_result->transaction->status === 'submitted_for_settlement')
@@ -149,18 +176,6 @@ class CreditCardController extends \PaymentMethodController {
    */
   protected function libraries_load($library) {
     return libraries_load($library);
-  }
-
-  /**
-   * Sets the braintree configuration variables.
-   */
-  public function setBraintreeSettings(\Payment $payment) {
-    $cd = $payment->method->controller_data + $this->controller_data_defaults;
-    Configuration::environment($cd['environment']);
-    Configuration::merchantId($cd['merchant_id']);
-    Configuration::publicKey($cd['public_key']);
-    Configuration::privateKey($cd['private_key']);
-    return $cd['merchant_account_id'];
   }
 
 }
