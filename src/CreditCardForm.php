@@ -11,6 +11,9 @@ use \Drupal\payment_forms\CreditCardForm as _CreditCardForm;
  * Defines the Credit Card Form on the clientside.
  */
 class CreditCardForm extends _CreditCardForm {
+
+  const JS_SDK_VERSION = '3.50.0';
+
   static protected $issuers = [];
   static protected $cvcLabel = [];
 
@@ -45,18 +48,7 @@ class CreditCardForm extends _CreditCardForm {
       'type' => 'setting',
       'data' => $settings,
     ];
-    $form['#attached']['js']['https://js.braintreegateway.com/web/3.7.0/js/client.min.js'] = [
-      'type' => 'external',
-      'group' => JS_LIBRARY,
-    ];
-    $form['#attached']['js']['https://js.braintreegateway.com/web/3.7.0/js/hosted-fields.min.js'] = [
-      'type' => 'external',
-      'group' => JS_LIBRARY,
-    ];
-    $form['#attached']['js'][drupal_get_path('module', 'braintree_payment') . '/braintree.js'] = [
-      'type' => 'file',
-      'group' => JS_DEFAULT,
-    ];
+    $form['#attached']['js'] += static::scriptAttachments();
 
     $data = $payment->method->controller_data['billing_data'];
     $default = ['keys' => [], 'required' => FALSE, 'display' => 'hidden'];
@@ -80,6 +72,30 @@ class CreditCardForm extends _CreditCardForm {
       '#type' => 'container',
     ];
     return $form;
+  }
+
+  /**
+   * Javascripts needed for the payment form.
+   *
+   * @return array
+   *   #attached-array with all the needed scripts.
+   */
+  protected static function scriptAttachments() {
+    $base_url = 'https://js.braintreegateway.com/web';
+    $version = static::JS_SDK_VERSION;
+    $js["$base_url/$version/js/client.min.js"] = [
+      'type' => 'external',
+      'group' => JS_LIBRARY,
+    ];
+    $js["$base_url/$version/js/hosted-fields.min.js"] = [
+      'type' => 'external',
+      'group' => JS_LIBRARY,
+    ];
+    $js[drupal_get_path('module', 'braintree_payment') . '/braintree.js'] = [
+      'type' => 'file',
+      'group' => JS_DEFAULT,
+    ];
+    return $js;
   }
 
   /**
