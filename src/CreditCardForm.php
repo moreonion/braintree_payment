@@ -50,6 +50,7 @@ class CreditCardForm extends _CreditCardForm {
     foreach ($bd as $name => &$field) {
       $config = isset($data[$name]) ? $data[$name] + $default : $default;
       $field['#controller_required'] = $config['required'];
+      $field['#default_value'] = '';
       if ($context) {
         foreach ($config['keys'] as $key) {
           if ($value = $context->value($key)) {
@@ -58,7 +59,11 @@ class CreditCardForm extends _CreditCardForm {
           }
         }
       }
-      $field['#access'] = $this->shouldDisplay($field, $config['display']);
+      if (!$this->shouldDisplay($field, $config['display'])) {
+        $field['#type'] = 'hidden';
+        $field['#value'] = $field['#default_value'];
+        $field['#attributes']['data-braintree-name'] = $field['#braintree_field'];
+      }
     }
 
     $form['billing_data'] = $bd + [
