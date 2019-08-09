@@ -83,7 +83,7 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
       $defaults += [
         'display' => 'ifnotset',
         'keys' => [$name],
-        'mandatory' => FALSE,
+        'required' => FALSE,
       ];
       $form['billing_data'][$name] = [
         '#type' => 'fieldset',
