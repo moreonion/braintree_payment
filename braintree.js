@@ -28,64 +28,74 @@
     if (typeof Drupal.clientsideValidation !== 'undefined') {
       $('#clientsidevalidation-' + this.form_id + '-errors ul').empty();
     }
+    
+    var client;
+    var client3ds;
+
+    var data = {
+      creditCard: {
+        number: $ccn.val(),
+        cvv: $cvv.val(),
+        expirationDate: $expiry_month.val() + '/' + $expiry_year.val()
+      }
+    };
+
+    function errorHandler(err) {
+      var msg = err.message;
+      if(msg.length > 0) {
+        Drupal.behaviors.braintree_payment.errorHandler(msg);
+      } else {
+        Drupal.behaviors.braintree_payment.errorHandler(err);
+      }
+      submitter.error();
+    }
 
     braintree.client.create({
       authorization: settings.payment_token
-    }, function(clientErr, clientInstance) {
-      if (clientErr) {
-        var detail_msg = clientErr.details.originalError.error.message;
-
-        if(detail_msg.length > 0) {
-          Drupal.behaviors.braintree_payment.errorHandler(detail_msg);
-        } else {
-          Drupal.behaviors.braintree_payment.errorHandler(requestErr);
-        }
-
-        submitter.error();
-        return;
+    }).then(function (clientInstance) {
+      client = clientInstance;
+      return braintree.threeDSecure.create({
+        version: 2,
+        client: clientInstance,
+      })
+    }).then(function (threeDSecureInstance) {
+      return {
+        client: client,
+        client3ds: threeDSecureInstance,
       }
-
-      var data = {
-        creditCard: {
-          number: $ccn.val(),
-          cvv: $cvv.val(),
-          expirationDate: $expiry_month.val() + '/' + $expiry_year.val()
-        }
-      };
-
-      clientInstance.request({
+    }).then(function (c) {
+      return c.client.request({
         endpoint: 'payment_methods/credit_cards',
         method: 'post',
         data: data,
         options: {
           validate: true
         }
-      }, function (requestErr, response) {
-        if (requestErr) {
-          var detail_msg = requestErr.details.originalError.error.message;
-          if (detail_msg.length > 0) {
-            Drupal.behaviors.braintree_payment.errorHandler(detail_msg);
-          } else {
-            Drupal.behaviors.braintree_payment.errorHandler(requestErr);
+      }).then(function (response) {
+        return c.client3ds.verifyCard({
+          amount: $method.find('input[data-braintree-name="amount"]').val(),
+          nonce: response.creditCards[0].nonce,
+          bin: response.creditCards[0].details.bin,
+          email: '',
+          billingAddress: {
+          },
+          onLookupComplete: function (data, next) {
+            next()
           }
-
-          submitter.error();
-          return;
-        }
-
-        // set the nonce we received
-        $nonce.val(response.creditCards[0].nonce);
-
-        // Now get rid of all the creditcard data
+        })
+      })
+      .then(function (response) {
+        // Put nonce into the hidden field.
+        $nonce.val(response.nonce)
+        // Now get rid of all the creditcard data.
         $ccn.val('');
         $cvv.val('');
         $expiry_month.val('');
         $expiry_year.val('');
-
         // Submit form
         submitter.ready();
-      });
-    });
+      }).catch(errorHandler);
+    }).catch(errorHandler);
   };
 
   Drupal.behaviors.braintree_payment.errorHandler = function(error) {

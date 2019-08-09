@@ -43,6 +43,12 @@ class CreditCardForm extends _CreditCardForm {
     ];
     $form['#attached']['js'] += static::scriptAttachments();
 
+    $form['amount'] = [
+      '#type' => 'hidden',
+      '#value' => (string) $payment->totalAmount(TRUE),
+      '#attributes' => ['data-braintree-name' => 'amount'],
+    ];
+
     $data = $method->controller_data['billing_data'];
     $default = ['keys' => [], 'required' => FALSE, 'display' => 'hidden'];
     $context = $payment->contextObj;
@@ -62,7 +68,7 @@ class CreditCardForm extends _CreditCardForm {
       if (!$this->shouldDisplay($field, $config['display'])) {
         $field['#type'] = 'hidden';
         $field['#value'] = $field['#default_value'];
-        $field['#attributes']['data-braintree-name'] = $field['#braintree_field'];
+        $field['#attributes']['data-braintree-name'] = 'billing_data.' . $field['#braintree_field'];
       }
     }
 
@@ -86,6 +92,10 @@ class CreditCardForm extends _CreditCardForm {
       'group' => JS_LIBRARY,
     ];
     $js["$base_url/$version/js/hosted-fields.min.js"] = [
+      'type' => 'external',
+      'group' => JS_LIBRARY,
+    ];
+    $js["$base_url/$version/js/three-d-secure.min.js"] = [
       'type' => 'external',
       'group' => JS_LIBRARY,
     ];
