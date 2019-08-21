@@ -1,4 +1,29 @@
 (function ($) {
+
+  class MethodElement {
+    constructor ($element) {
+      this.$element = $element
+    }
+    readCardData() {
+      var month = this.$element.find('[name$="[expiry_date][month]"]').val()
+      var year = this.$element.find('[name$="[expiry_date][year]"]').val()
+      return {
+        number: this.$element.find('[name$="[credit_card_number]"]').val(),
+        cvv: this.$element.find('[name$="[secure_code]"]').val(),
+        expirationDate: `${month}/${year}`,
+      }
+    }
+    clear() {
+      this.$element.find('[name$="[expry_date][month]"]').val('')
+      this.$element.find('[name$="[expry_date][year]"]').val('')
+      this.$element.find('[name$="[credit_card_number]"]').val('')
+      this.$element.find('[name$="[secure_code]"]').val('')
+    }
+    setNonce(value) {
+      this.$element.find('[name$="[braintree-payment-nonce]"]').val(value)
+    }
+  }
+
   Drupal.behaviors.braintree_payment = {};
   Drupal.behaviors.braintree_payment.attach = function(context, settings) {
     if($('input[name$="braintree-payment-nonce]"]', context).length > 0) {
@@ -16,13 +41,8 @@
   };
 
   Drupal.behaviors.braintree_payment.validateHandler = function(settings, $method, submitter) {
+    var element = new MethodElement($method)
     this.form_id = $method.closest('form').attr('id');
-
-    var $ccn = $method.find('[name$="[credit_card_number]"]');
-    var $cvv = $method.find('[name$="[secure_code]"]');
-    var $expiry_month = $method.find('[name$="[expiry_date][month]"]');
-    var $expiry_year = $method.find('[name$="[expiry_date][year]"]');
-    var $nonce = $method.find('[name$="[braintree-payment-nonce]"]');
 
     $('.mo-dialog-wrapper').addClass('visible');
     if (typeof Drupal.clientsideValidation !== 'undefined') {
@@ -31,14 +51,6 @@
     
     var client;
     var client3ds;
-
-    var data = {
-      creditCard: {
-        number: $ccn.val(),
-        cvv: $cvv.val(),
-        expirationDate: $expiry_month.val() + '/' + $expiry_year.val()
-      }
-    };
 
     function errorHandler(err) {
       var msg = err.message;
@@ -67,7 +79,7 @@
       return c.client.request({
         endpoint: 'payment_methods/credit_cards',
         method: 'post',
-        data: data,
+        data: {creditCard: element.readCardData()},
         options: {
           validate: true
         }
@@ -86,12 +98,9 @@
       })
       .then(function (response) {
         // Put nonce into the hidden field.
-        $nonce.val(response.nonce)
+        element.setNonce(response.nonce)
         // Now get rid of all the creditcard data.
-        $ccn.val('');
-        $cvv.val('');
-        $expiry_month.val('');
-        $expiry_year.val('');
+        element.clear()
         // Submit form
         submitter.ready();
       }).catch(errorHandler);
