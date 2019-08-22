@@ -14,9 +14,24 @@
   }
 
   class MethodElement {
-    constructor ($element) {
+    constructor ($element, settings) {
       this.$element = $element
+      this.settings = settings
       this.form_id = this.$element.closest('form').attr('id');
+      this.initFields()
+    }
+    initFields() {
+      braintree.client.create({
+        authorization: this.settings.payment_token
+      }).then((clientInstance) => {
+        this.client = clientInstance;
+        return braintree.threeDSecure.create({
+          version: 2,
+          client: clientInstance,
+        })
+      }).then((threeDSecureInstance) => {
+        this.client3ds = threeDSecureInstance
+      })
     }
     readCardData() {
       var month = this.$element.find('[name$="[expiry_date][month]"]').val()
@@ -45,65 +60,43 @@
       })
       return data
     }
-    validate(settings, submitter) {
+    validate(submitter) {
       $('.mo-dialog-wrapper').addClass('visible');
       if (typeof Drupal.clientsideValidation !== 'undefined') {
-        $('#clientsidevalidation-' + form_id + '-errors ul').empty();
+        $('#clientsidevalidation-' + this.form_id + '-errors ul').empty();
       }
 
-      var client;
-      var client3ds;
-      var self = this;
-
-      function errorHandler(err) {
+      this.client.request({
+        endpoint: 'payment_methods/credit_cards',
+        method: 'post',
+        data: {creditCard: this.readCardData()},
+        options: {
+          validate: true
+        }
+      }).then((response) => {
+        return this.client3ds.verifyCard($.extend({}, this.extraData(), {
+          nonce: response.creditCards[0].nonce,
+          bin: response.creditCards[0].details.bin,
+          onLookupComplete: function (data, next) {
+            next()
+          }
+        }))
+      }).then((response) => {
+        // Put nonce into the hidden field.
+        this.setNonce(response.nonce)
+        // Now get rid of all the creditcard data.
+        this.clear()
+        // Submit form
+        submitter.ready();
+      }).catch((err) => {
         var msg = err.message;
         if(msg.length > 0) {
-          self.errorHandler(msg);
+          this.errorHandler(msg);
         } else {
-          self.errorHandler(err);
+          this.errorHandler(err);
         }
         submitter.error();
-      }
-
-      braintree.client.create({
-        authorization: settings.payment_token
-      }).then(function (clientInstance) {
-        client = clientInstance;
-        return braintree.threeDSecure.create({
-          version: 2,
-          client: clientInstance,
-        })
-      }).then(function (threeDSecureInstance) {
-        return {
-          client: client,
-          client3ds: threeDSecureInstance,
-        }
-      }).then(function (c) {
-        return c.client.request({
-          endpoint: 'payment_methods/credit_cards',
-          method: 'post',
-          data: {creditCard: self.readCardData()},
-          options: {
-            validate: true
-          }
-        }).then(function (response) {
-          return c.client3ds.verifyCard($.extend({}, self.extraData(), {
-            nonce: response.creditCards[0].nonce,
-            bin: response.creditCards[0].details.bin,
-            onLookupComplete: function (data, next) {
-              next()
-            }
-          }))
-        })
-        .then(function (response) {
-          // Put nonce into the hidden field.
-          self.setNonce(response.nonce)
-          // Now get rid of all the creditcard data.
-          self.clear()
-          // Submit form
-          submitter.ready();
-        }).catch(errorHandler)
-      }).catch(errorHandler)
+      })
     }
     errorHandler(error) {
       var settings, wrapper, child
@@ -138,10 +131,10 @@
     $('input[name$="braintree-payment-nonce]"]', context).each(function() {
       var $method = $(this).closest('.payment-method-form')
       var pmid = $method.attr('data-pmid')
-      var element = new MethodElement($method)
+      var element = new MethodElement($method, settings.braintree_payment['pmid_' + pmid])
 
       Drupal.payment_handler[pmid] = function (pmid, $method, submitter) {
-        element.validate(settings.braintree_payment['pmid_' + pmid], submitter)
+        element.validate(submitter)
       }
     })
   };
