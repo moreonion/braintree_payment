@@ -4,6 +4,7 @@ core = 7.x
 php = 5.4
 
 dependencies[] = libraries
+dependencies[] = little_helpers:little_helpers (>= 7.x-2.0-alpha6)
 dependencies[] = payment (>= 7.x-1.10)
 dependencies[] = payment_context
 dependencies[] = payment_controller_data

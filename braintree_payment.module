@@ -110,3 +110,11 @@ function braintree_payment_campaignion_logcrm_payment_event_data_alter(array &$d
     }
   }
 }
+
+/**
+ * Element validate callback: Comma separated keys.
+ */
+function _braintree_payment_validate_comma_separated_keys($element, &$form_state, $form) {
+  $keys = array_map('trim', explode(',', $element['#value']));
+  form_set_value($element, $keys, $form_state);
+}

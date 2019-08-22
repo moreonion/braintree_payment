@@ -55,6 +55,21 @@ function braintree_payment_update_last_removed() {
 }
 
 /**
+ * Migrate field visibility settings.
+ */
+function braintree_payment_update_7200() {
+  $methods = entity_load('payment_method', FALSE, [
+    'controller_class_name' => 'braintree_payment_credit_card',
+  ]);
+  foreach ($methods as $method) {
+    $cd = &$method->controller_data;
+    $cd['input_settings']['billing_address'] = $cd['billing_data'];
+    unset($cd['billing_data']);
+    entity_save('payment_method', $method);
+  }
+}
+
+/**
  * Remove bogus unique indexes.
  */
 function braintree_payment_update_7007() {
