@@ -1,5 +1,18 @@
 (function ($) {
 
+  function deepSet(obj, keys, value) {
+    var key = keys.shift()
+    if (keys.length > 0) {
+      if (typeof obj[key] === 'undefined') {
+        obj[key] = {}
+      }
+      deepSet(obj[key], keys, value)
+    }
+    else {
+      obj[key] = value
+    }
+  }
+
   class MethodElement {
     constructor ($element) {
       this.$element = $element
@@ -21,6 +34,15 @@
     }
     setNonce(value) {
       this.$element.find('[name$="[braintree-payment-nonce]"]').val(value)
+    }
+    extraData() {
+      var data = {}
+      this.$element.find('[data-braintree-name]').each(function() {
+        var keys = $(this).attr('data-braintree-name').split('.')
+        var value = $(this).val()
+        deepSet(data, keys, value)
+      })
+      return data
     }
   }
 
@@ -84,17 +106,13 @@
           validate: true
         }
       }).then(function (response) {
-        return c.client3ds.verifyCard({
-          amount: $method.find('input[data-braintree-name="amount"]').val(),
+        return c.client3ds.verifyCard($.extend({}, element.extraData(), {
           nonce: response.creditCards[0].nonce,
           bin: response.creditCards[0].details.bin,
-          email: '',
-          billingAddress: {
-          },
           onLookupComplete: function (data, next) {
             next()
           }
-        })
+        }))
       })
       .then(function (response) {
         // Put nonce into the hidden field.
