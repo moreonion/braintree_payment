@@ -12,4 +12,7 @@ dependencies[] = payment_forms (>= 7.x-2.0-beta1)
 dependencies[] = webform_paymethod_select
 dependencies[] = xautoload (>= 7.x-5.0)
 
+
+stylesheets[all][] = braintree_payment.css
+
 files[] = tests/nonces.test

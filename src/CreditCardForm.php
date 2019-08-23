@@ -22,9 +22,30 @@ class CreditCardForm extends _CreditCardForm {
    * Defines the form that shall be rendered.
    */
   public function form(array $form, array &$form_state, \Payment $payment) {
-    $method = $payment->method;
     $form = parent::form($form, $form_state, $payment);
     unset($form['issuer']);
+    $method = $payment->method;
+
+    $form['credit_card_number'] = [
+      '#type' => 'braintree_payment_hosted_field',
+      '#field_name' => 'number',
+      '#attributes' => ['class' => ['cc-number']],
+    ] + $form['credit_card_number'];
+    $form['secure_code'] = [
+      '#type' => 'braintree_payment_hosted_field',
+      '#field_name' => 'cvv',
+      '#attributes' => ['class' => ['cc-cvv']],
+    ] + $form['secure_code'];
+    $form['expiry_date']['month'] = [
+      '#type' => 'braintree_payment_hosted_field',
+      '#field_name' => 'expirationMonth',
+      '#attributes' => ['class' => ['cc-month']],
+    ] + $form['expiry_date']['month'];
+    $form['expiry_date']['year'] = [
+      '#type' => 'braintree_payment_hosted_field',
+      '#field_name' => 'expirationYear',
+      '#attributes' => ['class' => ['cc-year']],
+    ] + $form['expiry_date']['year'];
 
     $form['braintree-payment-nonce'] = array(
       '#type' => 'hidden',

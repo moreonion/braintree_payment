@@ -8,6 +8,29 @@
 use Drupal\braintree_payment\CreditCardController;
 
 /**
+ * Implements hook_element_info().
+ */
+function braintree_payment_element_info() {
+  $types['braintree_payment_hosted_field'] = [
+    '#theme' => 'braintree_payment_hosted_field',
+    '#theme_wrappers' => ['form_element'],
+  ];
+  return $types;
+}
+
+/**
+ * Implemnts hook_theme().
+ */
+function braintree_payment_theme() {
+  $hooks['braintree_payment_hosted_field'] = [
+    'render element' => 'element',
+    'template' => 'braintree-payment-hosted-field',
+    'file' => 'braintree_payment.theme.inc',
+  ];
+  return $hooks;
+}
+
+/**
  * Implements hook_payment_method_controller_info().
  */
 function braintree_payment_payment_method_controller_info() {

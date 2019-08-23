@@ -20,33 +20,44 @@
       this.form_id = this.$element.closest('form').attr('id');
       this.initFields()
     }
+    getStyles() {
+      let $element = $('<div class="form-item"><input type="text" /></div>').hide().appendTo(this.$element)
+      let styles = window.getComputedStyle($element.find('input').get(0))
+      let ret = {
+        input: {
+          'font': styles.getPropertyValue('font'),
+          'line-height': styles.getPropertyValue('line-height'),
+        },
+      }
+      $element.remove()
+      return ret
+    }
     initFields() {
       braintree.client.create({
         authorization: this.settings.payment_token
       }).then((clientInstance) => {
-        this.client = clientInstance;
+        this.client = clientInstance
+        let fields = {}
+        this.$element.find('[data-braintree-hosted-field]').each(function() {
+          let name = $(this).attr('data-braintree-hosted-field')
+          fields[name] = {
+            selector: '#' + $(this).attr('id'),
+          }
+        })
+        return braintree.hostedFields.create({
+          client: clientInstance,
+          styles: this.getStyles(),
+          fields: fields,
+        })
+      }).then((hostedFieldsInstance) => {
+        this.hostedFields = hostedFieldsInstance
         return braintree.threeDSecure.create({
           version: 2,
-          client: clientInstance,
+          client: this.client,
         })
       }).then((threeDSecureInstance) => {
         this.client3ds = threeDSecureInstance
       })
-    }
-    readCardData() {
-      var month = this.$element.find('[name$="[expiry_date][month]"]').val()
-      var year = this.$element.find('[name$="[expiry_date][year]"]').val()
-      return {
-        number: this.$element.find('[name$="[credit_card_number]"]').val(),
-        cvv: this.$element.find('[name$="[secure_code]"]').val(),
-        expirationDate: `${month}/${year}`,
-      }
-    }
-    clear() {
-      this.$element.find('[name$="[expry_date][month]"]').val('')
-      this.$element.find('[name$="[expry_date][year]"]').val('')
-      this.$element.find('[name$="[credit_card_number]"]').val('')
-      this.$element.find('[name$="[secure_code]"]').val('')
     }
     setNonce(value) {
       this.$element.find('[name$="[braintree-payment-nonce]"]').val(value)
@@ -66,17 +77,10 @@
         $('#clientsidevalidation-' + this.form_id + '-errors ul').empty();
       }
 
-      this.client.request({
-        endpoint: 'payment_methods/credit_cards',
-        method: 'post',
-        data: {creditCard: this.readCardData()},
-        options: {
-          validate: true
-        }
-      }).then((response) => {
+      this.hostedFields.tokenize().then((payload) => {
         return this.client3ds.verifyCard($.extend({}, this.extraData(), {
-          nonce: response.creditCards[0].nonce,
-          bin: response.creditCards[0].details.bin,
+          nonce: payload.nonce,
+          bin: payload.details.bin,
           onLookupComplete: function (data, next) {
             next()
           }
@@ -84,8 +88,6 @@
       }).then((response) => {
         // Put nonce into the hidden field.
         this.setNonce(response.nonce)
-        // Now get rid of all the creditcard data.
-        this.clear()
         // Submit form
         submitter.ready();
       }).catch((err) => {
