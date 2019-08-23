@@ -232,8 +232,6 @@ class CreditCardController extends \PaymentMethodController {
   public function execute(\Payment $payment) {
     $this->libraries_load('braintree-php');
 
-    $plan_id = NULL;
-
     $data = [
       'amount' => $payment->totalAmount(TRUE),
       'paymentMethodNonce' => $payment->method_data['braintree-payment-nonce'],
@@ -245,16 +243,13 @@ class CreditCardController extends \PaymentMethodController {
     if (!empty($payment->method->controller_data['merchant_account_id'])) {
       $data['merchantAccountId'] = $payment->method->controller_data['merchant_account_id'];
     }
-    $transaction_result = $this->createGateway($payment->method)->transaction()
+    $result = $this->createGateway($payment->method)->transaction()
       ->sale($data);
 
-    if ($transaction_result->success &&
-      $transaction_result->transaction->status === 'submitted_for_settlement')
-    {
+    if ($result->success && $result->transaction->status === 'submitted_for_settlement') {
       $payment->braintree = [
-        'braintree_id' => $transaction_result->transaction->id,
-        'type'      => $transaction_result->transaction->paymentInstrumentType,
-        'plan_id'   => $plan_id,
+        'braintree_id' => $result->transaction->id,
+        'type'      => $result->transaction->paymentInstrumentType,
       ];
       $payment->setStatus(new \PaymentStatusItem(PAYMENT_STATUS_SUCCESS));
       $this->entity_save('payment', $payment);
@@ -268,15 +263,15 @@ class CreditCardController extends \PaymentMethodController {
         'the braintree server. The status code "@status" and the error ' .
         'message "@message". (pid: @pid, pmid: @pmid)';
       $variables = array(
-        '@status'   => $transaction_result->code,
-        '@message'  => $transaction_result->message,
+        '@status'   => $result->code,
+        '@message'  => $result->message,
         '@pid'      => $payment->pid,
         '@pmid'     => $payment->method->pmid,
         '@method'   => $payment->method->title_specific,
       );
 
-      drupal_set_message($transaction_result->message);
-      watchdog('braintree_payment', $message, $variables, WATCHDOG_ERROR);
+      $this->drupal_set_message($result->message);
+      $this->watchdog('braintree_payment', $message, $variables, WATCHDOG_ERROR);
     }
   }
 
@@ -290,15 +285,8 @@ class CreditCardController extends \PaymentMethodController {
   /**
    * This method is "overloaded" to enable mocking in testing scenarios.
    */
-  protected function watchdog($scope, $msg, $log_level) {
-    return watchdog($scope, $msg, $log_level);
-  }
-
-  /**
-   * This method is "overloaded" to enable mocking in testing scenarios.
-   */
-  protected function drupal_write_record($table, $params) {
-    return drupal_write_record($table, $params);
+  protected function watchdog($scope, $msg, $variables, $log_level) {
+    return watchdog($scope, $msg, $variables, $log_level);
   }
 
   /**
