@@ -4,3 +4,6 @@
   padding: 4px;
   margin: 2px 0;
 }
+.braintree-payment-hosted-field-iframe-wrapper.error {
+  background-image: none;
+}

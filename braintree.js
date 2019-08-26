@@ -21,13 +21,17 @@
       this.initFields()
     }
     getStyles() {
-      let $element = $('<div class="form-item"><input type="text" /></div>').hide().appendTo(this.$element)
-      let styles = window.getComputedStyle($element.find('input').get(0))
-      let ret = {
-        input: {
-          'font': styles.getPropertyValue('font'),
-          'line-height': styles.getPropertyValue('line-height'),
-        },
+      let $element, styles, ret = {}
+      $element = $('<div class="form-item"><input type="text" class="default" /><input type="text" class="error" /></div>').hide().appendTo(this.$element)
+      styles = window.getComputedStyle($element.find('input.default').get(0))
+      ret['input'] = {
+        'color': styles.getPropertyValue('color'),
+        'font': styles.getPropertyValue('font'),
+        'line-height': styles.getPropertyValue('line-height'),
+      }
+      styles = window.getComputedStyle($element.find('input.error').get(0))
+      ret['input.invalid'] = {
+        'color': styles.getPropertyValue('color'),
       }
       $element.remove()
       return ret
@@ -37,11 +41,12 @@
         authorization: this.settings.payment_token
       }).then((clientInstance) => {
         this.client = clientInstance
+        this.$hostedFields = this.$element.find('[data-braintree-hosted-field]')
         let fields = {}
-        this.$element.find('[data-braintree-hosted-field]').each(function() {
+        this.$hostedFields.each(function() {
           let name = $(this).attr('data-braintree-hosted-field')
           fields[name] = {
-            selector: '#' + $(this).attr('id'),
+            container: this,
           }
         })
         return braintree.hostedFields.create({
@@ -77,6 +82,7 @@
         $('#clientsidevalidation-' + this.form_id + '-errors ul').empty();
       }
 
+      this.$hostedFields.removeClass('error')
       this.hostedFields.tokenize().then((payload) => {
         return this.client3ds.verifyCard($.extend({}, this.extraData(), {
           nonce: payload.nonce,
@@ -86,11 +92,23 @@
           }
         }))
       }).then((response) => {
-        // Put nonce into the hidden field.
-        this.setNonce(response.nonce)
-        // Submit form
-        submitter.ready();
+        let info3ds = response.threeDSecureInfo
+        if (info3ds.liabilityShiftPossible && !info3ds.liabilityShifted) {
+          // Callback was successful but 3DS wasn’t.
+          this.errorHandler(Drupal.t('Card verification failed. Please choose another form of payment.'))
+          submitter.error()
+        }
+        else {
+          // Everything good: Set nonce and submit the form.
+          this.setNonce(response.nonce)
+          submitter.ready();
+        }
       }).catch((err) => {
+        if (err.code == 'HOSTED_FIELDS_FIELDS_INVALID') {
+          for (const key in err.details.invalidFields) {
+            err.details.invalidFields[key].classList.add('error')
+          }
+        }
         var msg = err.message;
         if(msg.length > 0) {
           this.errorHandler(msg);
