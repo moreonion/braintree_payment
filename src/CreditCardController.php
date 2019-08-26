@@ -15,6 +15,7 @@ class CreditCardController extends \PaymentMethodController {
     'merchant_account_id' => '',
     'private_key' => '',
     'public_key'  => '',
+    'force_liability_shift' => FALSE,
     'input_settings' => [
       'email' => [
         'enabled' => TRUE,

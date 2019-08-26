@@ -85,6 +85,11 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
       '#default_value' => $cd['merchant_account_id'],
     ];
 
+    $form['force_liability_shift'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Refuse payments without liability shift'),
+    ];
+
     $form['input_settings']['#type'] = 'container';
     // Configuration for extra data elements.
     $extra = CreditCardForm::extraElements();

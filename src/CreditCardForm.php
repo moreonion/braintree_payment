@@ -56,6 +56,7 @@ class CreditCardForm extends _CreditCardForm {
     $settings['braintree_payment']['pmid_' . $method->pmid] = array(
       'payment_token' => $method->controller->getClientToken($method),
       'pmid' => $method->pmid,
+      'forceLiabilityShift' => !empty($method->conroller_data['force_liability_shift']),
     );
 
     // Attach client side JS files and settings to javascript settings variable.

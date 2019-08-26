@@ -96,8 +96,8 @@ class MethodElement {
       }))
     }).then((response) => {
       let info3ds = response.threeDSecureInfo
-      if (info3ds.liabilityShiftPossible && !info3ds.liabilityShifted) {
-        // Callback was successful but 3DS wasn’t.
+      if (!info3ds.liabilityShifted && (info3ds.liabilityShiftPossible || this.settings.forceLiabilityShift)) {
+        // Liability shift didn’t occur.
         this.errorHandler(Drupal.t('Card verification failed. Please choose another form of payment.'))
         submitter.error()
       }
