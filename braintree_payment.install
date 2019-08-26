@@ -38,6 +38,10 @@ function braintree_payment_schema() {
         'not null' => FALSE,
         'default' => '',
       ),
+      'threeds_status' => [
+        'type' => 'varchar',
+        'length' => 128,
+      ],
     ),
     'primary key' => array('pid'),
     'indexes' => array(
@@ -52,6 +56,16 @@ function braintree_payment_schema() {
  */
 function braintree_payment_update_last_removed() {
   return 7005;
+}
+
+/**
+ * Add {braintree_payment}.threeds_status.
+ */
+function braintree_payment_update_7201() {
+  db_add_field('braintree_payment', 'threeds_status', [
+    'type' => 'varchar',
+    'length' => 128,
+  ]);
 }
 
 /**

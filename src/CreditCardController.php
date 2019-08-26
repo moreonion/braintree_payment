@@ -249,7 +249,8 @@ class CreditCardController extends \PaymentMethodController {
     if ($result->success && $result->transaction->status === 'submitted_for_settlement') {
       $payment->braintree = [
         'braintree_id' => $result->transaction->id,
-        'type'      => $result->transaction->paymentInstrumentType,
+        'type' => $result->transaction->paymentInstrumentType,
+        'threeds_status' => $result->transaction->threeDSecureInfo->status,
       ];
       $payment->setStatus(new \PaymentStatusItem(PAYMENT_STATUS_SUCCESS));
       $this->entity_save('payment', $payment);
