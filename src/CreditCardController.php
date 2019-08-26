@@ -9,6 +9,7 @@ use \Braintree\Transaction;
  * Defines the controller class of the Braintree payment method.
  */
 class CreditCardController extends \PaymentMethodController {
+
   public $controller_data_defaults = array(
     'environment' => 'sandbox',
     'merchant_id' => '',
@@ -157,6 +158,8 @@ class CreditCardController extends \PaymentMethodController {
     'enable_recurrent_payments' => 0,
   );
 
+  protected $gateway = NULL;
+
   /**
    * Sets up title and configuration form callbacks.
    */
@@ -165,6 +168,35 @@ class CreditCardController extends \PaymentMethodController {
 
     $this->payment_configuration_form_elements_callback = 'payment_forms_payment_form';
     $this->payment_method_configuration_form_elements_callback = 'payment_forms_method_configuration_form';
+  }
+
+  /**
+   * Set the braintree gateway to use.
+   */
+  public function setGateway(Gateway $gateway) {
+    $this->gateway = $gateway;
+  }
+
+  /**
+   * Get braintree gateway based on the controller settings.
+   *
+   * @param \Payment $payment
+   *   The payment to get the API-client for.
+   *
+   * @return \Braintree\Gateway
+   *   The API-client to use for this payment.
+   */
+  public function getGateway(\PaymentMethod $method) {
+    if (!$this->gateway) {
+      $cd = $method->controller_data;
+      $this->gateway = new Gateway([
+        'environment' => $cd['environment'],
+        'merchantId' => $cd['merchant_id'],
+        'publicKey' => $cd['public_key'],
+        'privateKey' => $cd['private_key'],
+      ]);
+    }
+    return $this->gateway;
   }
 
   /**
@@ -201,22 +233,6 @@ class CreditCardController extends \PaymentMethodController {
   }
 
   /**
-   * Create a Braintree Gateway instance for interacting with the API.
-   *
-   * @return \Braintree\Gateway
-   *   A newly created Braintree gateway instance.
-   */
-  public function createGateway(\PaymentMethod $method) {
-    $cd = $method->controller_data + $this->controller_data_defaults;
-    return new Gateway([
-      'environment' => $cd['environment'],
-      'merchantId' => $cd['merchant_id'],
-      'publicKey' => $cd['public_key'],
-      'privateKey' => $cd['private_key'],
-    ]);
-  }
-
-  /**
    * Request a new client token.
    */
   public function getClientToken(\PaymentMethod $method) {
@@ -224,7 +240,7 @@ class CreditCardController extends \PaymentMethodController {
     if (!empty($method->controller_data['merchant_account_id'])) {
       $data['merchantAccountId'] = $method->controller_data['merchant_account_id'];
     }
-    return $this->createGateway($method)->clientToken()->generate($data);
+    return $this->getGateway($method)->clientToken()->generate($data);
   }
 
   /**
@@ -244,7 +260,7 @@ class CreditCardController extends \PaymentMethodController {
     if (!empty($payment->method->controller_data['merchant_account_id'])) {
       $data['merchantAccountId'] = $payment->method->controller_data['merchant_account_id'];
     }
-    $result = $this->createGateway($payment->method)->transaction()
+    $result = $this->getGateway($payment->method)->transaction()
       ->sale($data);
 
     if ($result->success && $result->transaction->status === 'submitted_for_settlement') {

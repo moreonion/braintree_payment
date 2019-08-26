@@ -143,6 +143,7 @@ class CreditCardForm extends _CreditCardForm {
           $element['#type'] = 'container';
         }
         else {
+          $element += ['#default_value' => ''];
           $element['#type'] = 'hidden';
           $element['#value'] = $element['#default_value'];
         }
