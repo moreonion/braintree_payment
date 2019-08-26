@@ -1,0 +1,27 @@
+{
+  "name": "drupal-braintree-payment",
+  "version": "0.0.0",
+  "description": "JavaScript behavior for braintree_payment",
+  "scripts": {
+    "dist": "parcel build --no-source-maps --global braintree_payment -d dist -o braintree.min.js src/main.js",
+    "dev": "parcel --global braintree_payment -d build src/index.html",
+    "test": "mocha --require babel-core/register --ui tdd --reporter dot test",
+    "lint": "eslint src test"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^10.0.1",
+    "babel-preset-env": "^1.7.0",
+    "eslint": "^5.16.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.17.2",
+    "eslint-plugin-node": "^9.0.1",
+    "eslint-plugin-promise": "^4.1.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "mocha": "^6.1.4",
+    "parcel-bundler": "^1.12.3",
+    "parcel-plugin-eslint": "^1.0.7",
+    "sinon": "^7.3.2"
+  },
+  "dependencies": {}
+}
