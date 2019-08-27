@@ -25,4 +25,3 @@ releaseable files are created under `dist/`.
 For Drupal copy the releaseable files to `../js`:
 
     yarn run drupal
-

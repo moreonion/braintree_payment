@@ -2,8 +2,8 @@
 
 namespace Drupal\braintree_payment;
 
-use \Braintree\Gateway;
-use \Braintree\Transaction;
+use Braintree\Gateway;
+use Braintree\Transaction;
 
 /**
  * Defines the controller class of the Braintree payment method.
@@ -180,11 +180,11 @@ class CreditCardController extends \PaymentMethodController {
   /**
    * Get braintree gateway based on the controller settings.
    *
-   * @param \Payment $payment
-   *   The payment to get the API-client for.
+   * @param \PaymentMethod $method
+   *   The payment method to get the API-client for.
    *
    * @return \Braintree\Gateway
-   *   The API-client to use for this payment.
+   *   A configured braintree gateway for this payment method.
    */
   public function getGateway(\PaymentMethod $method) {
     if (!$this->gateway) {

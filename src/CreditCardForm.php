@@ -2,14 +2,11 @@
 
 namespace Drupal\braintree_payment;
 
-use Braintree\ClientToken;
-use Braintree\Configuration;
 use Drupal\little_helpers\ElementTree;
 use Drupal\payment_forms\CreditCardForm as _CreditCardForm;
 
 /**
- * @file
- * Defines the Credit Card Form on the clientside.
+ * Defines the form rendered when making a payment.
  */
 class CreditCardForm extends _CreditCardForm {
 
@@ -76,7 +73,7 @@ class CreditCardForm extends _CreditCardForm {
     $data_fieldset['#settings'] = $method->controller_data['input_settings'];
 
     // Recursively set #settings and remove #required.
-    ElementTree::applyRecursively($data_fieldset, function(&$element, $key, &$parent) {
+    ElementTree::applyRecursively($data_fieldset, function (&$element, $key, &$parent) {
       if ($key) {
         $element['#settings'] = $parent['#settings'][$key];
       }

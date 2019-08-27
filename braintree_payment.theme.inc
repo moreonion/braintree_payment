@@ -8,11 +8,11 @@
 /**
  * Prepares variables for braintree hosted field templates.
  *
- * @param array $variables
+ * @param array $vars
  *   An associative array containing:
  *   - element: The rendered form API element.
  */
-function template_process_braintree_payment_hosted_field(&$vars) {
+function template_process_braintree_payment_hosted_field(array &$vars) {
   $vars['attributes'] = $vars['element']['#attributes'] ?? [];
   $vars['attributes'] += [
     'id' => $vars['element']['#id'] ?? drupal_html_id('braintree-hosted-field'),

@@ -13,7 +13,7 @@ use Drupal\payment_forms\MethodFormInterface;
 /**
  * Defines a configuration form for the Braintree payment method.
  */
-class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInterface {
+class CreditCardConfigurationForm implements MethodFormInterface {
 
   /**
    * Get display options for a customer data field.
@@ -50,8 +50,8 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
       '#default_value' => $cd['environment'],
       '#options' => array(
         'production' => t('Production'),
-        'sandbox' => t('Sandbox')
-      )
+        'sandbox' => t('Sandbox'),
+      ),
     );
 
     $form['merchant_id'] = array(
@@ -198,7 +198,8 @@ class CreditCardConfigurationForm implements \Drupal\payment_forms\MethodFormInt
       }
     }
     catch (Authentication $e) {
-      // Braintree doesn't give us any meaningful error msg or error code, so we just print that something's wrong.
+      // Braintree doesn't give us any meaningful error msg or error code,
+      // so we just print that something's wrong.
       $msg = t('Unable to contact Braintree using this set of keys. Please check if your Merchant ID, Public and Private key are correct.');
       form_error($element['public_key'], $msg);
       form_error($element['private_key']);
