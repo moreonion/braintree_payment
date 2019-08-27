@@ -20,7 +20,17 @@ class MethodElement {
     this.$element = $element
     this.settings = settings
     this.form_id = this.$element.closest('form').attr('id')
-    this.initFields()
+    this.waitForLibrariesThenInit()
+  }
+  waitForLibrariesThenInit () {
+    if (typeof braintree !== 'undefined' && typeof braintree.client !== 'undefined' && typeof braintree.hostedFields !== 'undefined' && braintree.threeDSecure !== 'undefined') {
+      this.initFields()
+    }
+    else {
+      window.setTimeout(() => {
+        this.waitForLibrariesThenInit()
+      }, 100)
+    }
   }
   getStyles () {
     let styles
