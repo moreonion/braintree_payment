@@ -252,7 +252,7 @@ class CreditCardController extends \PaymentMethodController {
     $data = [
       'amount' => $payment->totalAmount(TRUE),
       'paymentMethodNonce' => $payment->method_data['braintree-payment-nonce'],
-      'billing' => $payment->method_data['billing_data'],
+      'billing' => $payment->method_data['extra_data']['billingAddress'],
       'options' => [
         'submitForSettlement' => TRUE,
       ],
@@ -260,8 +260,7 @@ class CreditCardController extends \PaymentMethodController {
     if (!empty($payment->method->controller_data['merchant_account_id'])) {
       $data['merchantAccountId'] = $payment->method->controller_data['merchant_account_id'];
     }
-    $result = $this->getGateway($payment->method)->transaction()
-      ->sale($data);
+    $result = $this->getGateway($payment->method)->transaction()->sale($data);
 
     if ($result->success && $result->transaction->status === 'submitted_for_settlement') {
       $payment->braintree = [

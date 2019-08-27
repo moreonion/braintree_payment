@@ -190,28 +190,23 @@ class CreditCardForm extends _CreditCardForm {
     $values = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
     $payment->method_data['braintree-payment-nonce'] = $values['braintree-payment-nonce'];
 
-    $bd = [];
-    foreach ($element['billing_data'] as $field) {
-      if (!empty($field['#controller_required']) && empty($field['#value'])) {
-        form_error($field, t('!name field is required.', array('!name' => $field['#title'])));
+    $extra_data = [];
+    $deep_set = function (&$data, $keys, $value) use (&$deep_set) {
+      $key = array_shift($keys);
+      if ($keys) {
+        $data += [$key => []];
+        $deep_set($data[$key], $keys, $value);
       }
-      // Only pass non-empty fields in method data.
-      if (!empty($field['#value'])) {
-        $bd[$field['#braintree_field']] = $field['#value'];
+      else {
+        $data[$key] = $value;
       }
-    }
-    // Always provide at least an empty address.
-    $payment->method_data['billing_data'] = $bd + [
-      'company' => '',
-      'countryCodeAlpha2' => '',
-      'extendedAddress' => '',
-      'firstName' => '',
-      'lastName' => '',
-      'locality' => '',
-      'postalCode' => '',
-      'region' => '',
-      'streetAddress' => '',
-    ];
+    };
+    ElementTree::applyRecursively($element, function (&$element, $key, &$parent) use ($deep_set, &$extra_data) {
+      if (isset($element['#braintree_field'])) {
+        $deep_set($extra_data, explode('.', $element['#braintree_field']), $element['#value']);
+      }
+    });
+    $payment->method_data['extra_data'] = $extra_data;
   }
 
   /**
