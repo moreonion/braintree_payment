@@ -24,24 +24,24 @@ class CreditCardForm extends _CreditCardForm {
     $method = $payment->method;
 
     $form['credit_card_number'] = [
-      '#type' => 'braintree_payment_hosted_field',
+      '#process' => array_merge(['braintree_payment_hosted_fields_process'], element_info('textfield')['#process']),
       '#field_name' => 'number',
-      '#attributes' => ['class' => ['cc-number']],
+      '#wrapper_classes' => ['cc-number'],
     ] + $form['credit_card_number'];
     $form['secure_code'] = [
-      '#type' => 'braintree_payment_hosted_field',
+      '#process' => array_merge(['braintree_payment_hosted_fields_process'], element_info('textfield')['#process']),
       '#field_name' => 'cvv',
-      '#attributes' => ['class' => ['cc-cvv']],
+      '#wrapper_classes' => ['cc-cvv'],
     ] + $form['secure_code'];
     $form['expiry_date']['month'] = [
-      '#type' => 'braintree_payment_hosted_field',
+      '#process' => array_merge(['braintree_payment_hosted_fields_process'], element_info('select')['#process']),
       '#field_name' => 'expirationMonth',
-      '#attributes' => ['class' => ['cc-month']],
+      '#wrapper_classes' => ['cc-month'],
     ] + $form['expiry_date']['month'];
     $form['expiry_date']['year'] = [
-      '#type' => 'braintree_payment_hosted_field',
+      '#process' => array_merge(['braintree_payment_hosted_fields_process'], element_info('select')['#process']),
       '#field_name' => 'expirationYear',
-      '#attributes' => ['class' => ['cc-year']],
+      '#wrapper_classes' => ['cc-year'],
     ] + $form['expiry_date']['year'];
 
     $form['braintree-payment-nonce'] = array(

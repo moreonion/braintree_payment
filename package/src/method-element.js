@@ -35,7 +35,7 @@ class MethodElement {
   getStyles () {
     let styles
     let ret = {}
-    let $element = $('<div class="form-item"><input type="text" class="default" /><input type="text" class="error" /></div>').hide().appendTo(this.$element)
+    let $element = $('<div class="form-item"><input type="text" class="default" /><input type="text" class="error" /><select><option>One</option></select></div>').hide().appendTo(this.$element)
     styles = window.getComputedStyle($element.find('input.default').get(0))
     ret['input'] = {
       'color': styles.getPropertyValue('color'),
@@ -46,35 +46,65 @@ class MethodElement {
     ret['input.invalid'] = {
       'color': styles.getPropertyValue('color'),
     }
+    styles = window.getComputedStyle($element.find('select').get(0))
+    ret['select'] = {
+      'font': styles.getPropertyValue('font'),
+    }
     $element.remove()
     return ret
   }
+  startLoading () {
+    this.$element.addClass('loading')
+    $('<div class="loading-wrapper"><div class="throbber"></div></div>').appendTo(this.$element.children('.fieldset-wrapper'))
+  }
+  stopLoading () {
+    this.$element.find('.loading-wrapper').remove()
+    this.$element.removeClass('loading')
+  }
   initFields () {
+    this.startLoading()
     braintree.client.create({
       authorization: this.settings.payment_token
     }).then((clientInstance) => {
       this.client = clientInstance
-      this.$hostedFields = this.$element.find('[data-braintree-hosted-field]')
+      this.$wrappers = this.$element.find('.braintree-hosted-fields-wrapper')
       let fields = {}
-      this.$hostedFields.each(function () {
-        let name = $(this).attr('data-braintree-hosted-field')
-        fields[name] = {
+      this.$wrappers.each(function () {
+        let $this = $(this)
+        let name = $this.data('braintreeHostedFieldsField')
+        let settings = {
           container: this,
         }
+        let $input = $this.children('input, select')
+        if ($input.get(0).tagName === 'SELECT') {
+          settings.select = true
+          $this.addClass('select-input')
+        }
+        else {
+          settings.placeholder = this.getAttribute('placeholder')
+          $this.addClass('text-input')
+        }
+        fields[name] = settings
+        $this.css({
+          'height': $input.outerHeight(),
+          'box-sizing': 'border-box',
+        })
       })
       return braintree.hostedFields.create({
         client: clientInstance,
         styles: this.getStyles(),
-        fields: fields,
+        fields: $.extend(true, {}, this.settings.fields, fields),
       })
     }).then((hostedFieldsInstance) => {
       this.hostedFields = hostedFieldsInstance
+      this.$wrappers.addClass('braintree-hosted-fields-processed')
       return braintree.threeDSecure.create({
         version: 2,
         client: this.client,
       })
     }).then((threeDSecureInstance) => {
       this.client3ds = threeDSecureInstance
+      this.stopLoading()
     })
   }
   setNonce (value) {
@@ -95,7 +125,7 @@ class MethodElement {
       $('#clientsidevalidation-' + this.form_id + '-errors ul').empty()
     }
 
-    this.$hostedFields.removeClass('error')
+    this.$wrappers.removeClass('invalid')
     this.hostedFields.tokenize().then((payload) => {
       return this.client3ds.verifyCard($.extend({}, this.extraData(), {
         nonce: payload.nonce,
@@ -119,7 +149,7 @@ class MethodElement {
     }).catch((err) => {
       if (err.code === 'HOSTED_FIELDS_FIELDS_INVALID') {
         for (const key in err.details.invalidFields) {
-          err.details.invalidFields[key].classList.add('error')
+          err.details.invalidFields[key].classList.add('invalid')
         }
       }
       var msg = err.message

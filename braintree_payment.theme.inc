@@ -13,11 +13,12 @@
  *   - element: The rendered form API element.
  */
 function template_process_braintree_payment_hosted_field(array &$vars) {
-  $vars['attributes'] = $vars['element']['#attributes'] ?? [];
-  $vars['attributes'] += [
-    'id' => $vars['element']['#id'] ?? drupal_html_id('braintree-hosted-field'),
-    'data-braintree-hosted-field' => $vars['element']['#field_name'],
+  $element = $vars['element'] + [
+    '#wrapper_classes' => [],
   ];
-  $vars['attributes']['class'][] = 'braintree-payment-hosted-field-iframe-wrapper';
-  $vars['attributes']['class'][] = 'text-input';
+  $element['#wrapper_classes'][] = 'braintree-hosted-fields-wrapper';
+  $vars['content'] = $element['#children'];
+  $vars['attributes'] = $element['#attributes'] ?? [];
+  $vars['attributes']['class'] = $element['#wrapper_classes'];
+  $vars['attributes']['data-braintree-hosted-fields-field'] = $element['#field_name'];
 }

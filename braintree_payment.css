@@ -1,9 +1,42 @@
-.braintree-payment-hosted-field-iframe-wrapper {
-  height: 1.5em;
+.braintree-hosted-fields-wrapper iframe {
+  display: none;
+}
+.braintree-hosted-fields-wrapper.braintree-hosted-fields-processed iframe {
+  display: block;
+}
+.braintree-hosted-fields-wrapper select,
+.braintree-hosted-fields-wrapper input {
+  visibility: hidden;
+}
+.braintree-hosted-fields-wrapper.braintree-hosted-fields-processed select,
+.braintree-hosted-fields-wrapper.braintree-hosted-fields-processed input {
+  display: none !important;
+}
+
+.braintree-hosted-fields-processed {
   border: 1px solid #ccc;
   padding: 4px;
   margin: 2px 0;
 }
-.braintree-payment-hosted-field-iframe-wrapper.error {
-  background-image: none;
+.braintree-hosted-fields-processed.invalid,
+.braintree-hosted-fields-processed.braintree-hosted-fields-invalid {
+  color: #8c2e0b;
+  border: 2px solid red;
+}
+.braintree-hosted-fields-processed.focused,
+.braintree-hosted-fields-processed.braintree-hosted-fields-focused {
+  outline-offset: -2px;
+}
+.loading > .fieldset-wrapper {
+  position: relative;
+}
+.loading-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: white;
+  opacity: 0.6;
+  margin-bottom: -16px;
 }
