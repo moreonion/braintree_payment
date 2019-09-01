@@ -9,6 +9,10 @@ Drupal.behaviors.braintree_payment.attach = function (context, settings) {
     Drupal.payment_handler = {}
   }
   $('input[name$="braintree-payment-nonce]"]', context).each(function () {
+    if (!document.body.contains(this)) {
+      // Guard against running for unmounted elements.
+      return
+    }
     var $method = $(this).closest('.payment-method-form')
     var pmid = $method.attr('data-pmid')
     var element = new MethodElement($method, settings.braintree_payment['pmid_' + pmid])
