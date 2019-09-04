@@ -199,8 +199,8 @@ class CreditCardForm extends _CreditCardForm {
       }
     };
     ElementTree::applyRecursively($element, function (&$element, $key, &$parent) use ($deep_set, &$extra_data) {
-      if (isset($element['#braintree_field'])) {
-        $deep_set($extra_data, explode('.', $element['#braintree_field']), $element['#value']);
+      if (isset($element['#braintree_php_field'])) {
+        $deep_set($extra_data, explode('.', $element['#braintree_php_field']), $element['#value']);
       }
     });
     $payment->method_data['extra_data'] = $extra_data;
@@ -224,6 +224,7 @@ class CreditCardForm extends _CreditCardForm {
       '#type' => 'textfield',
       '#title' => t('Email address'),
       '#braintree_field' => 'email',
+      '#braintree_php_field' => 'customer.email',
     ];
 
     $fields['billing_address'] = [
@@ -234,47 +235,56 @@ class CreditCardForm extends _CreditCardForm {
       '#type' => 'textfield',
       '#title' => t('First name'),
       '#braintree_field' => 'billingAddress.firstName',
+      '#braintree_php_field' => 'billing.firstName',
     ];
     $fields['billing_address']['last_name'] = [
       '#type' => 'textfield',
       '#title' => t('Last name'),
       '#braintree_field' => 'billingAddress.lastName',
+      '#braintree_php_field' => 'billing.lastName',
     ];
     $fields['billing_address']['company'] = [
       '#type' => 'textfield',
       '#title' => t('Company'),
       '#braintree_field' => 'billingAddress.company',
+      '#braintree_php_field' => 'billing.company',
     ];
     $fields['billing_address']['street_address'] = [
       '#type' => 'textfield',
       '#title' => t('Address line 1'),
       '#braintree_field' => 'billingAddress.streetAddress',
+      '#braintree_php_field' => 'billing.streetAddress',
     ];
     $fields['billing_address']['address_line2'] = [
       '#type' => 'textfield',
       '#title' => t('Address line 2'),
       '#braintree_field' => 'billingAddress.extendedAddress',
+      '#braintree_php_field' => 'billing.extendedAddress',
     ];
     $fields['billing_address']['country'] = [
       '#type' => 'select',
       '#options' => country_get_list(),
       '#title' => t('Country'),
       '#braintree_field' => 'billingAddress.countryCodeAlpha2',
+      '#braintree_php_field' => 'billing.countryCodeAlpha2',
     ];
     $fields['billing_address']['postcode'] = [
       '#type' => 'textfield',
       '#title' => t('Postal code'),
       '#braintree_field' => 'billingAddress.postalCode',
+      '#braintree_php_field' => 'billing.postalCode',
     ];
     $fields['billing_address']['city'] = [
       '#type' => 'textfield',
       '#title' => t('City/Locality'),
       '#braintree_field' => 'billingAddress.locality',
+      '#braintree_php_field' => 'billing.locality',
     ];
     $fields['billing_address']['region'] = [
       '#type' => 'textfield',
       '#title' => t('Region/State'),
       '#braintree_field' => 'billingAddress.region',
+      '#braintree_php_field' => 'billing.region',
     ];
 
     $fields['shipping_address'] = [
@@ -285,21 +295,25 @@ class CreditCardForm extends _CreditCardForm {
       '#type' => 'textfield',
       '#title' => t('Given name'),
       '#braintree_field' => 'additionalInformation.shippingGivenName',
+      '#braintree_php_field' => 'shipping.firstName',
     ];
     $fields['shipping_address']['surname'] = [
       '#type' => 'textfield',
       '#title' => t('Surname'),
       '#braintree_field' => 'additionalInformation.shippingSurname',
+      '#braintree_php_field' => 'shipping.lastName',
     ];
     $fields['shipping_address']['street_address'] = [
       '#type' => 'textfield',
       '#title' => t('Street address'),
       '#braintree_field' => 'additionalInformation.shippingAddress.streetAddress',
+      '#braintree_php_field' => 'shipping.streetAddress',
     ];
     $fields['shipping_address']['extended_address'] = [
       '#type' => 'textfield',
       '#title' => t('Extended address'),
       '#braintree_field' => 'additionalInformation.shippingAddress.extendedAddress',
+      '#braintree_php_field' => 'shipping.extendedAddress',
     ];
     $fields['shipping_address']['line3'] = [
       '#type' => 'textfield',
@@ -310,21 +324,25 @@ class CreditCardForm extends _CreditCardForm {
       '#type' => 'textfield',
       '#title' => t('Locality (city)'),
       '#braintree_field' => 'additionalInformation.shippingAddress.locality',
+      '#braintree_php_field' => 'shipping.locality',
     ];
     $fields['shipping_address']['region'] = [
       '#type' => 'textfield',
       '#title' => t('Region'),
       '#braintree_field' => 'additionalInformation.shippingAddress.region',
+      '#braintree_php_field' => 'shipping.region',
     ];
     $fields['shipping_address']['postal_code'] = [
       '#type' => 'textfield',
       '#title' => t('Postal code'),
       '#braintree_field' => 'additionalInformation.shippingAddress.postalCode',
+      '#braintree_php_field' => 'shipping.postalCode',
     ];
     $fields['shipping_address']['country'] = [
       '#type' => 'select',
       '#title' => t('Country'),
       '#braintree_field' => 'additionalInformation.shippingAddress.countryCodeAlpha2',
+      '#braintree_php_field' => 'shipping.countryCodeAlpha2',
       '#options' => country_get_list(),
     ];
 

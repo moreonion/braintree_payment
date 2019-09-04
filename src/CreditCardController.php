@@ -252,11 +252,10 @@ class CreditCardController extends \PaymentMethodController {
     $data = [
       'amount' => $payment->totalAmount(TRUE),
       'paymentMethodNonce' => $payment->method_data['braintree-payment-nonce'],
-      'billing' => $payment->method_data['extra_data']['billingAddress'],
       'options' => [
         'submitForSettlement' => TRUE,
       ],
-    ];
+    ] + $payment->method_data['extra_data'];
     if (!empty($payment->method->controller_data['merchant_account_id'])) {
       $data['merchantAccountId'] = $payment->method->controller_data['merchant_account_id'];
     }
