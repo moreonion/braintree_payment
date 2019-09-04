@@ -18,7 +18,9 @@ function deepSet (obj, keys, value) {
 class MethodElement {
   constructor ($element, settings) {
     this.$element = $element
-    this.settings = settings
+    this.settings = $.extend(settings, {
+      wrapperClasses: ['form-control'],
+    })
     this.form_id = this.$element.closest('form').attr('id')
     this.waitForLibrariesThenInit()
   }
@@ -98,6 +100,7 @@ class MethodElement {
     }).then((hostedFieldsInstance) => {
       this.hostedFields = hostedFieldsInstance
       this.$wrappers.addClass('braintree-hosted-fields-processed')
+      this.$wrappers.addClass(this.settings.wrapperClasses.join(' '))
       return braintree.threeDSecure.create({
         version: 2,
         client: this.client,
