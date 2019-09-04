@@ -286,7 +286,7 @@ class CreditCardController extends \PaymentMethodController {
         '@method'   => $payment->method->title_specific,
       );
 
-      $this->drupal_set_message($result->message);
+      $this->drupal_set_message($result->message, 'error');
       $this->watchdog('braintree_payment', $message, $variables, WATCHDOG_ERROR);
     }
   }
@@ -294,8 +294,8 @@ class CreditCardController extends \PaymentMethodController {
   /**
    * This method is "overloaded" to enable mocking in testing scenarios.
    */
-  protected function drupal_set_message($msg) {
-    return drupal_set_message($msg);
+  protected function drupal_set_message($msg, $type) {
+    return drupal_set_message($msg, $type);
   }
 
   /**
