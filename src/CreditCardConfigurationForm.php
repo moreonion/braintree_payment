@@ -96,7 +96,7 @@ class CreditCardConfigurationForm implements MethodFormInterface {
     $extra['#settings_element'] = &$form['input_settings'];
     $extra['#settings_defaults'] = $cd['input_settings'];
     $extra['#settings_root'] = TRUE;
-    ElementTree::applyRecursively($extra, function (&$element, $key, &$parent) use ($stored) {
+    ElementTree::applyRecursively($extra, function (&$element, $key, &$parent) {
       if (!$key) {
         // Skip the root element.
         return;
