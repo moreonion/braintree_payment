@@ -8,6 +8,18 @@
 use Drupal\braintree_payment\CreditCardController;
 
 /**
+ * Implemnts hook_theme().
+ */
+function braintree_payment_theme() {
+  $hooks['braintree_payment_hosted_field'] = [
+    'render element' => 'element',
+    'template' => 'braintree-payment-hosted-field',
+    'file' => 'braintree_payment.theme.inc',
+  ];
+  return $hooks;
+}
+
+/**
  * Implements hook_payment_method_controller_info().
  */
 function braintree_payment_payment_method_controller_info() {
@@ -109,4 +121,21 @@ function braintree_payment_campaignion_logcrm_payment_event_data_alter(array &$d
       $data['braintree_id'] = $payment->braintree['braintree_id'];
     }
   }
+}
+
+/**
+ * Element validate callback: Comma separated keys.
+ */
+function _braintree_payment_validate_comma_separated_keys($element, &$form_state, $form) {
+  $keys = array_map('trim', explode(',', $element['#value']));
+  form_set_value($element, $keys, $form_state);
+}
+
+/**
+ * Element process function for hosted fields.
+ */
+function braintree_payment_hosted_fields_process($element) {
+  $element['#input'] = FALSE;
+  array_unshift($element['#theme_wrappers'], 'braintree_payment_hosted_field');
+  return $element;
 }
