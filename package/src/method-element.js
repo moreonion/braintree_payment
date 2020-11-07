@@ -99,6 +99,8 @@ class MethodElement {
       })
     }).then((hostedFieldsInstance) => {
       this.hostedFields = hostedFieldsInstance
+      // The type attributes conflict with jquery.validate 1.11. Remove them.
+      this.$wrappers.find('iframe').removeAttr('type')
       this.$wrappers.addClass('braintree-hosted-fields-processed')
       this.$wrappers.addClass(this.settings.wrapperClasses.join(' '))
       return braintree.threeDSecure.create({
