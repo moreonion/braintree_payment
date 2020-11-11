@@ -272,20 +272,20 @@ class CreditCardController extends \PaymentMethodController {
     }
     else {
       $payment->setStatus(new \PaymentStatusItem(PAYMENT_STATUS_FAILED));
-      entity_save('payment', $payment);
+      $this->entity_save('payment', $payment);
 
-      $message =
-        '@method payment method encountered an error while contacting ' .
-        'the braintree server. The status code "@status" and the error ' .
-        'message "@message". (pid: @pid, pmid: @pmid)';
-      $variables = array(
-        '@status'   => $result->code,
-        '@message'  => $result->message,
-        '@pid'      => $payment->pid,
-        '@pmid'     => $payment->method->pmid,
-        '@method'   => $payment->method->title_specific,
-      );
-
+      $variables['@method'] = $payment->method->title_specific;
+      $variables['@pid'] = $payment->pid;
+      $variables['@pmid'] = $payment->method->pmid;
+      if (!empty($result->transaction)) {
+        $message = "@method — Transaction status: {$result->transaction->status} (pid: @pid, pmid: @pmid)";
+      }
+      else {
+        $message = '@method — Got an error response for a transaction sale request: @errors (pid: @pid, pmid: @pmid)';
+        $variables['@errors'] = implode("\n", array_map(function ($error) {
+          return "{$error->code} - {$error->message}";
+        }, $result->errors->deepAll()));
+      }
       $this->watchdog('braintree_payment', $message, $variables, WATCHDOG_ERROR);
     }
   }
