@@ -1,9 +1,9 @@
 /* global Drupal, jQuery, braintree */
 
-var $ = jQuery
+const $ = jQuery
 
 function deepSet (obj, keys, value) {
-  var key = keys.shift()
+  const key = keys.shift()
   if (keys.length > 0) {
     if (typeof obj[key] === 'undefined') {
       obj[key] = {}
@@ -24,6 +24,7 @@ class MethodElement {
     this.form_id = this.$element.closest('form').attr('id')
     this.waitForLibrariesThenInit()
   }
+
   waitForLibrariesThenInit () {
     if (typeof braintree !== 'undefined' && typeof braintree.client !== 'undefined' && typeof braintree.hostedFields !== 'undefined' && braintree.threeDSecure !== 'undefined') {
       this.initFields()
@@ -34,12 +35,13 @@ class MethodElement {
       }, 100)
     }
   }
+
   getStyles () {
     let styles
-    let ret = {}
-    let $element = $('<div class="form-item"><input type="text" class="default" /><input type="text" class="error" /><select><option>One</option></select></div>').hide().appendTo(this.$element)
+    const ret = {}
+    const $element = $('<div class="form-item"><input type="text" class="default" /><input type="text" class="error" /><select><option>One</option></select></div>').hide().appendTo(this.$element)
     styles = window.getComputedStyle($element.find('input.default').get(0))
-    ret['input'] = {
+    ret.input = {
       'color': styles.getPropertyValue('color'),
       'font': styles.getPropertyValue('font'),
       'line-height': styles.getPropertyValue('line-height'),
@@ -49,20 +51,23 @@ class MethodElement {
       'color': styles.getPropertyValue('color'),
     }
     styles = window.getComputedStyle($element.find('select').get(0))
-    ret['select'] = {
+    ret.select = {
       'font': styles.getPropertyValue('font'),
     }
     $element.remove()
     return ret
   }
+
   startLoading () {
     this.$element.addClass('loading')
     $('<div class="loading-wrapper"><div class="throbber"></div></div>').appendTo(this.$element.children('.fieldset-wrapper'))
   }
+
   stopLoading () {
     this.$element.find('.loading-wrapper').remove()
     this.$element.removeClass('loading')
   }
+
   initFields () {
     this.startLoading()
     braintree.client.create({
@@ -70,14 +75,14 @@ class MethodElement {
     }).then((clientInstance) => {
       this.client = clientInstance
       this.$wrappers = this.$element.find('.braintree-hosted-fields-wrapper')
-      let fields = {}
+      const fields = {}
       this.$wrappers.each(function () {
-        let $this = $(this)
-        let name = $this.data('braintreeHostedFieldsField')
-        let settings = {
+        const $this = $(this)
+        const name = $this.data('braintreeHostedFieldsField')
+        const settings = {
           container: this,
         }
-        let $input = $this.children('input, select')
+        const $input = $this.children('input, select')
         if ($input.get(0).tagName === 'SELECT') {
           settings.select = true
           $this.addClass('select-input')
@@ -112,18 +117,21 @@ class MethodElement {
       this.stopLoading()
     })
   }
+
   setNonce (value) {
     this.$element.find('[name$="[braintree-payment-nonce]"]').val(value)
   }
+
   extraData () {
-    var data = {}
+    const data = {}
     this.$element.find('[data-braintree-name]').each(function () {
-      var keys = $(this).attr('data-braintree-name').split('.')
-      var value = $(this).val()
+      const keys = $(this).attr('data-braintree-name').split('.')
+      const value = $(this).val()
       deepSet(data, keys, value)
     })
     return data
   }
+
   validate (submitter) {
     $('.mo-dialog-wrapper').addClass('visible')
     if (typeof Drupal.clientsideValidation !== 'undefined') {
@@ -140,7 +148,7 @@ class MethodElement {
         }
       }))
     }).then((response) => {
-      let info3ds = response.threeDSecureInfo
+      const info3ds = response.threeDSecureInfo
       if (!info3ds.liabilityShifted && (info3ds.liabilityShiftPossible || this.settings.forceLiabilityShift)) {
         // Liability shift didn’t occur.
         this.errorHandler(Drupal.t('Card verification failed. Please choose another form of payment.'))
@@ -157,7 +165,7 @@ class MethodElement {
           err.details.invalidFields[key].classList.add('invalid')
         }
       }
-      var msg = err.message
+      const msg = err.message
       if (msg.length > 0) {
         this.errorHandler(msg)
       }
@@ -167,10 +175,11 @@ class MethodElement {
       submitter.error()
     })
   }
+
   errorHandler (error) {
-    var settings, wrapper, child
+    let settings, wrapper, child
     if (typeof Drupal.clientsideValidation !== 'undefined') {
-      settings = Drupal.settings.clientsideValidation['forms'][this.form_id]
+      settings = Drupal.settings.clientsideValidation.forms[this.form_id]
       wrapper = document.createElement(settings.general.wrapper)
       child = document.createElement(settings.general.errorElement)
       child.className = settings.general.errorClass
