@@ -7,37 +7,31 @@ use Braintree\Exception\NotFound;
 use Braintree\ClientToken;
 use Braintree\Configuration;
 use Braintree\MerchantAccount;
-use Drupal\little_helpers\ElementTree;
 use Drupal\payment_forms\MethodFormInterface;
 
 /**
  * Defines a configuration form for the Braintree payment method.
  */
-class CreditCardConfigurationForm implements MethodFormInterface {
+class BraintreeConfigurationForm implements MethodFormInterface {
 
   /**
-   * Get display options for a customer data field.
-   */
-  public static function displayOptions($required) {
-    $display_options = [
-      'ifnotset' => t('Show field if it is not available from the context.'),
-      'always' => t('Always show the field - prefill with context values.'),
-    ];
-    if (!$required) {
-      $display_options['hidden'] = t('Don’t display, use values from context if available.');
-    }
-    return $display_options;
-  }
-
-  /**
-   * Returns a new configuration form.
+   * Form elements for the configuration form.
+   *
+   * @param array $form
+   *   The Drupal form array.
+   * @param array $form_state
+   *   The Drupal form_state array.
+   * @param \PaymentMethod $method
+   *   The Stripe payment method.
+   *
+   * @return array
+   *   The updated form array.
    */
   public function form(array $form, array &$form_state, \PaymentMethod $method) {
-    $cd = $method->controller_data
-      + $method->controller->controller_data_defaults;
+    $cd = $method->controller_data;
+    $customer_data_form = $method->controller->customerDataForm();
 
     $library = libraries_detect('braintree-php');
-
     if (empty($library['installed'])) {
       drupal_set_message($library['error message'], 'error', FALSE);
     }
@@ -90,89 +84,20 @@ class CreditCardConfigurationForm implements MethodFormInterface {
       '#title' => t('Refuse payments without liability shift'),
     ];
 
-    $form['input_settings']['#type'] = 'container';
-    // Configuration for extra data elements.
-    $extra = CreditCardForm::extraElements();
-    $extra['#settings_element'] = &$form['input_settings'];
-    $extra['#settings_defaults'] = $cd['input_settings'];
-    $extra['#settings_root'] = TRUE;
-    ElementTree::applyRecursively($extra, function (&$element, $key, &$parent) {
-      if (!$key) {
-        // Skip the root element.
-        return;
-      }
-      else {
-        $element['#settings_defaults'] = $parent['#settings_defaults'][$key];
-      }
-      if (in_array($element['#type'], ['fieldset', 'container'])) {
-        $fieldset = [
-          '#collapsible' => TRUE,
-          '#collapsed' => TRUE,
-        ] + $element;
-      }
-      else {
-        $defaults = $element['#settings_defaults'];
-        $fieldset = [
-          '#type' => 'fieldset',
-          '#title' => $element['#title'],
-          '#collapsible' => TRUE,
-          '#collapsed' => TRUE,
-        ];
-        $required = !empty($element['#required']);
-        $defaults['required'] = $defaults['required'] || $required;
-        $enabled_id = drupal_html_id('controller_data_enabled_' . $key);
-        $fieldset['enabled'] = [
-          '#type' => 'checkbox',
-          '#title' => t('Enabled: Make this field available for Advanced Fraud Protection purposes.'),
-          '#default_value' => $defaults['enabled'],
-          '#id' => $enabled_id,
-        ];
-        $display_id = drupal_html_id('controller_data_display_' . $key);
-        $fieldset['display'] = [
-          '#type' => 'radios',
-          '#title' => t('Display'),
-          '#options' => CreditCardConfigurationForm::displayOptions($required),
-          '#default_value' => $defaults['display'],
-          '#id' => $display_id,
-          '#states' => ['visible' => ["#$enabled_id" => ['checked' => TRUE]]],
-        ];
-        if (empty($parent['#settings_root'])) {
-          $fieldset['display_other'] = [
-            '#type' => 'radios',
-            '#title' => t('Display when other fields in the same fieldset are visible.'),
-            '#options' => CreditCardConfigurationForm::displayOptions($required),
-            '#default_value' => $defaults['display_other'],
-            '#states' => [
-              'invisible' => ["#$display_id" => ['value' => 'always']],
-              'visible' => ["#$enabled_id" => ['checked' => TRUE]],
-            ],
-          ];
-        }
-        $fieldset['required'] = array(
-          '#type' => 'checkbox',
-          '#title' => t('Required'),
-          '#states' => ['disabled' => ["#$display_id" => ['value' => 'hidden']]],
-          '#default_value' => $defaults['required'],
-          '#access' => !$required,
-          '#states' => ['visible' => ["#$enabled_id" => ['checked' => TRUE]]],
-        );
-        $fieldset['keys'] = array(
-          '#type' => 'textfield',
-          '#title' => t('Context keys'),
-          '#description' => t('When building the form these (comma separated) keys are used to ask the Payment Context for a (default) value for this field.'),
-          '#default_value' => implode(', ', $defaults['keys']),
-          '#element_validate' => ['_braintree_payment_validate_comma_separated_keys'],
-          '#states' => ['visible' => ["#$enabled_id" => ['checked' => TRUE]]],
-        );
-      }
-      $parent['#settings_element'][$key] = &$fieldset;
-      $element['#settings_element'] = &$fieldset;
-    });
+    $form['input_settings'] = $customer_data_form->configurationForm($method->controller_data['input_settings']);
+
     return $form;
   }
 
   /**
-   * Validates the configuration form input.
+   * Validate the submitted values and put them in the method’s controller data.
+   *
+   * @param array $element
+   *   The Drupal elements array.
+   * @param array $form_state
+   *   The Drupal form_state array.
+   * @param \PaymentMethod $method
+   *   The payment method.
    */
   public function validate(array $element, array &$form_state, \PaymentMethod $method) {
     $cd = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
