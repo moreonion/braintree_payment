@@ -1,21 +1,14 @@
-/* global Drupal, jQuery, braintree */
+/* global Drupal, jQuery */
 
 const $ = jQuery
 
-function deepSet (obj, keys, value) {
-  const key = keys.shift()
-  if (keys.length > 0) {
-    if (typeof obj[key] === 'undefined') {
-      obj[key] = {}
-    }
-    deepSet(obj[key], keys, value)
-  }
-  else {
-    obj[key] = value
-  }
-}
-
 class MethodElement {
+  /**
+  * Initializes a new MethodElement.
+  *
+  * @param {JQuery} $element - The element to attach to.
+  * @param {object} settings - A settings object.
+  */
   constructor ($element, settings) {
     this.$element = $element
     this.settings = $.extend(settings, {
@@ -23,52 +16,49 @@ class MethodElement {
     })
     this.form_id = this.$element.closest('form').attr('id')
     this.errorHandler = this.clientsideValidationEnabled ? this.clientsideValidationErrorHandler : this.fallbackErrorHandler
-    this.waitForLibrariesThenInit()
   }
 
-  waitForLibrariesThenInit () {
-    if (typeof braintree !== 'undefined' && typeof braintree.client !== 'undefined' && typeof braintree.hostedFields !== 'undefined' && braintree.threeDSecure !== 'undefined') {
-      this.initFields()
+  /**
+   * Sets a value on a (nested) key.
+   *
+   * @param {object} obj - The object to update.
+   * @param {array} keys - The path of keys to the value.
+   * @param value - The new value.
+   */
+  static deepSet (obj, keys, value) {
+    const key = keys.shift()
+    if (keys.length > 0) {
+      if (typeof obj[key] === 'undefined') {
+        obj[key] = {}
+      }
+      MethodElement.deepSet(obj[key], keys, value)
     }
     else {
-      window.setTimeout(() => {
-        this.waitForLibrariesThenInit()
-      }, 100)
+      obj[key] = value
     }
   }
 
-  getStyles () {
-    let styles
-    const ret = {}
-    const $element = $('<div class="form-item"><input type="text" class="default" /><input type="text" class="error" /><select><option>One</option></select></div>').hide().appendTo(this.$element)
-    styles = window.getComputedStyle($element.find('input.default').get(0))
-    ret.input = {
-      'color': styles.getPropertyValue('color'),
-      'font': styles.getPropertyValue('font'),
-      'line-height': styles.getPropertyValue('line-height'),
-    }
-    styles = window.getComputedStyle($element.find('input.error').get(0))
-    ret['input.invalid'] = {
-      'color': styles.getPropertyValue('color'),
-    }
-    styles = window.getComputedStyle($element.find('select').get(0))
-    ret.select = {
-      'font': styles.getPropertyValue('font'),
-    }
-    $element.remove()
-    return ret
-  }
-
+  /**
+   * Displays a loading animation.
+   */
   startLoading () {
     this.$element.addClass('loading')
     $('<div class="loading-wrapper"><div class="throbber"></div></div>').appendTo(this.$element.children('.fieldset-wrapper'))
   }
 
+  /**
+   * Removes the loading animation.
+   */
   stopLoading () {
     this.$element.find('.loading-wrapper').remove()
     this.$element.removeClass('loading')
   }
 
+  /**
+   * Sets the nonce value on the form.
+   *
+   * @param {string} value - The nonce value.
+   */
   setNonce (value) {
     this.$element.find('[name$="[braintree-payment-nonce]"]').val(value)
   }
@@ -81,7 +71,7 @@ class MethodElement {
     this.$element.find('[data-braintree-name]').each(function () {
       const keys = $(this).attr('data-braintree-name').split('.')
       const value = $(this).val()
-      this.deepSet(data, keys, value)
+      MethodElement.deepSet(data, keys, value)
     })
     return data
   }
@@ -90,7 +80,7 @@ class MethodElement {
    * Displays error messages using Drupal Clientside Validation.
    *
    * @param {object} error - The Braintree error data.
-   * @param {jquery} $field - The field that caused the error.
+   * @param {JQuery} $field - The field that caused the error.
    */
   clientsideValidationErrorHandler (error, $field = null) {
     const validator = Drupal.myClientsideValidation.validators[this.form_id]
