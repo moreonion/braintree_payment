@@ -15,7 +15,14 @@ Drupal.behaviors.braintree_payment.attach = function (context, settings) {
     }
     const $method = $(this).closest('.payment-method-form')
     const pmid = $method.attr('data-pmid')
-    const element = new MethodElement($method, settings.braintree_payment['pmid_' + pmid])
+    const methodSettings = settings.braintree_payment['pmid_' + pmid]
+
+    let element = {}
+    switch (methodSettings.method) {
+      case 'braintree_payment_credit_card':
+        element = new MethodElement($method, methodSettings)
+        break
+    }
 
     Drupal.payment_handler[pmid] = function (pmid, $method, submitter) {
       element.validate(submitter)

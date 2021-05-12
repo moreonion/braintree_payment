@@ -36,6 +36,7 @@ abstract class BraintreeForm {
       'payment_token' => $method->controller->getClientToken($method),
       'pmid' => $method->pmid,
       'forceLiabilityShift' => !empty($method->conroller_data['force_liability_shift']),
+      'method' => $method->controller->name,
     );
 
     // Attach client side JS files and settings to javascript settings variable.
