@@ -68,139 +68,72 @@ class MethodElement {
     this.$element.removeClass('loading')
   }
 
-  initFields () {
-    this.startLoading()
-    braintree.client.create({
-      authorization: this.settings.payment_token
-    }).then((clientInstance) => {
-      this.client = clientInstance
-      this.$wrappers = this.$element.find('.braintree-hosted-fields-wrapper')
-      const fields = {}
-      this.$wrappers.each(function () {
-        const $this = $(this)
-        const name = $this.data('braintreeHostedFieldsField')
-        const settings = {
-          container: this,
-        }
-        const $input = $this.children('input, select')
-        if ($input.get(0).tagName === 'SELECT') {
-          settings.select = true
-          $this.addClass('select-input')
-        }
-        else {
-          settings.placeholder = this.getAttribute('placeholder')
-          $this.addClass('text-input')
-        }
-        fields[name] = settings
-        $this.css({
-          'height': $input.outerHeight(),
-          'box-sizing': 'border-box',
-        })
-      })
-      return braintree.hostedFields.create({
-        client: clientInstance,
-        styles: this.getStyles(),
-        fields: $.extend(true, {}, this.settings.fields, fields),
-      })
-    }).then((hostedFieldsInstance) => {
-      this.hostedFields = hostedFieldsInstance
-      // The type attributes conflict with jquery.validate 1.11. Remove them.
-      this.$wrappers.find('iframe').removeAttr('type')
-      this.$wrappers.addClass('braintree-hosted-fields-processed')
-      this.$wrappers.addClass(this.settings.wrapperClasses.join(' '))
-      return braintree.threeDSecure.create({
-        version: 2,
-        client: this.client,
-      })
-    }).then((threeDSecureInstance) => {
-      this.client3ds = threeDSecureInstance
-      this.stopLoading()
-    })
-  }
-
   setNonce (value) {
     this.$element.find('[name$="[braintree-payment-nonce]"]').val(value)
   }
 
+  /**
+   * Collects values from extra data fields.
+   */
   extraData () {
     const data = {}
     this.$element.find('[data-braintree-name]').each(function () {
       const keys = $(this).attr('data-braintree-name').split('.')
       const value = $(this).val()
-      deepSet(data, keys, value)
+      this.deepSet(data, keys, value)
     })
     return data
   }
 
-  validate (submitter) {
-    $('.mo-dialog-wrapper').addClass('visible')
-    if (typeof Drupal.clientsideValidation !== 'undefined') {
-      $('#clientsidevalidation-' + this.form_id + '-errors ul').empty()
-    }
-
-    this.$wrappers.removeClass('invalid')
-    this.hostedFields.tokenize().then((payload) => {
-      return this.client3ds.verifyCard($.extend({}, this.extraData(), {
-        nonce: payload.nonce,
-        bin: payload.details.bin,
-        onLookupComplete: function (data, next) {
-          next()
-        }
-      }))
-    }).then((response) => {
-      const info3ds = response.threeDSecureInfo
-      if (!info3ds.liabilityShifted && (info3ds.liabilityShiftPossible || this.settings.forceLiabilityShift)) {
-        // Liability shift didn’t occur.
-        this.errorHandler(Drupal.t('Card verification failed. Please choose another form of payment.'))
-        submitter.error()
+  /**
+   * Display error messages.
+   * @param {object} error - The Braintree error data.
+   * @param {jquery} $field - The field that caused the error.
+   */
+  errorHandler (error, $field = null) {
+    // Trigger clientside validation for respective field.
+    if (this.clientsideValidationEnabled()) {
+      const validator = Drupal.myClientsideValidation.validators[this.form_id]
+      if ($field && $field.attr('name')) {
+        const errors = {}
+        errors[$field.attr('name')] = error
+        // Needed so jQuery validate will find the element when removing errors.
+        validator.currentElements.push($field)
+        // Trigger validation error.
+        validator.showErrors(errors)
       }
       else {
-        // Everything good: Set nonce and submit the form.
-        this.setNonce(response.nonce)
-        submitter.ready()
-      }
-    }).catch((err) => {
-      if (err.code === 'HOSTED_FIELDS_FIELDS_INVALID') {
-        for (const key in err.details.invalidFields) {
-          const field = err.details.invalidFields[key]
-          field.classList.add('invalid')
-          const $label = $(`label[for='${$('input, select', $(field)).attr('id')}']`)
-          this.errorHandler(Drupal.t('Invalid @field_name', {'@field_name': $label.text()}))
+        // The error is not related to a payment field, reconstruct error markup.
+        const settings = Drupal.settings.clientsideValidation.forms[this.form_id].general
+        const $message = $(`<${settings.errorElement} class="${settings.errorClass}">`).text(error)
+        const $wrapper = $('#clientsidevalidation-' + this.form_id + '-errors')
+        // Add message to clientside validation wrapper if there is one.
+        if ($wrapper.length) {
+          const $list = $wrapper.find('ul')
+          $message.wrap(`<${settings.wrapper}>`).parent().addClass('braintree-error').appendTo($list)
+          $list.show()
+          $wrapper.show()
         }
-      }
-      else {
-        const msg = err.message
-        if (msg.length > 0) {
-          this.errorHandler(msg)
-        }
+        // Show message above the payment fieldset in want of a better place.
         else {
-          this.errorHandler(err)
+          $message.addClass('braintree-error').insertBefore(this.$element)
         }
       }
-      submitter.error()
-    })
+    }
+    // Without clientside validation render a message above the form.
+    else {
+      const $message = $('<div class="messages error">').text(error)
+      $message.addClass('braintree-error').insertBefore(this.$element.closest('form'))
+    }
   }
 
-  errorHandler (error) {
-    let settings, wrapper, child
-    if (typeof Drupal.clientsideValidation !== 'undefined') {
-      settings = Drupal.settings.clientsideValidation.forms[this.form_id]
-      wrapper = document.createElement(settings.general.wrapper)
-      child = document.createElement(settings.general.errorElement)
-      child.className = settings.general.errorClass
-      child.innerHTML = error
-      wrapper.appendChild(child)
-
-      $('#clientsidevalidation-' + this.form_id + '-errors ul')
-        .append(wrapper).show()
-        .parent().show()
-    }
-    else {
-      if ($('#messages').length === 0) {
-        $('<div id="messages"><div class="section clearfix"></div></div>').insertAfter('#header')
-      }
-      $('<div class="messages error">' + error + '</div>').appendTo('#messages .clearfix')
-    }
+  /**
+   * Checks whether clientside validation is enabled for this form.
+   */
+  clientsideValidationEnabled () {
+    return typeof Drupal.clientsideValidation !== 'undefined' &&
+           typeof Drupal.myClientsideValidation.validators[this.form_id] !== 'undefined' &&
+           typeof Drupal.settings.clientsideValidation.forms[this.form_id] !== 'undefined'
   }
 }
 
