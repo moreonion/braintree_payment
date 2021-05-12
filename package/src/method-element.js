@@ -162,15 +162,20 @@ class MethodElement {
     }).catch((err) => {
       if (err.code === 'HOSTED_FIELDS_FIELDS_INVALID') {
         for (const key in err.details.invalidFields) {
-          err.details.invalidFields[key].classList.add('invalid')
+          const field = err.details.invalidFields[key]
+          field.classList.add('invalid')
+          const $label = $(`label[for='${$('input, select', $(field)).attr('id')}']`)
+          this.errorHandler(Drupal.t('Invalid @field_name', {'@field_name': $label.text()}))
         }
       }
-      const msg = err.message
-      if (msg.length > 0) {
-        this.errorHandler(msg)
-      }
       else {
-        this.errorHandler(err)
+        const msg = err.message
+        if (msg.length > 0) {
+          this.errorHandler(msg)
+        }
+        else {
+          this.errorHandler(err)
+        }
       }
       submitter.error()
     })
