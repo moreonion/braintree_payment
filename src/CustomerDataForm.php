@@ -500,24 +500,10 @@ class CustomerDataForm {
     $extra_data = [];
     ElementTree::applyRecursively($element, function (&$element, $key, &$parent) use (&$extra_data) {
       if (isset($element['#braintree_php_field'])) {
-        static::deep_set($extra_data, explode('.', $element['#braintree_php_field']), $element['#value']);
+        drupal_array_set_nested_value($extra_data, explode('.', $element['#braintree_php_field']), $element['#value']);
       }
     });
     return $extra_data;
-  }
-
-  /**
-   * Helper for recursively settings values in arrays.
-   */
-  protected static function deepSet(&$data, $keys, $value) {
-    $key = array_shift($keys);
-    if ($keys) {
-      $data += [$key => []];
-      static::deepSet($data[$key], $keys, $value);
-    }
-    else {
-      $data[$key] = $value;
-    }
   }
 
 }
