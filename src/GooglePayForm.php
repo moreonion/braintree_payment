@@ -2,15 +2,17 @@
 
 namespace Drupal\braintree_payment;
 
-use Drupal\payment_forms\CreditCardForm as _CreditCardForm;
+use Drupal\payment_forms\PaymentFormInterface;
 
 /**
  * Defines the form rendered when making a payment.
  */
-class GooglePayForm extends _CreditCardForm {
+class GooglePayForm implements PaymentFormInterface {
+
+  const GOOGLE_PAY_JS = 'https://pay.google.com/gp/p/js/pay.js';
 
   /**
-   * Add form elements for Braintree credit card payments.
+   * Add form elements for Braintree Google Pay payments.
    *
    * @param array $form
    *   The Drupal form array.
@@ -23,28 +25,15 @@ class GooglePayForm extends _CreditCardForm {
    *   The updated form array.
    */
   public function form(array $form, array &$form_state, \Payment $payment) {
-    $form = parent::form($form, $form_state, $payment);
     $form = BraintreeForm::form($form, $form_state, $payment);
-
-    // Override payment fields.
-    unset($form['issuer']);
-    unset($form['credit_card_number']);
-    unset($form['secure_code']);
-    unset($form['expiry_date']);
-
     // Additional JS
     $base_url = BraintreeForm::jsUrl();
+    $js_options = ['type' => 'external', 'group' => JS_LIBRARY];
     $form['#attached']['js'] += [
-      "https://pay.google.com/gp/p/js/pay.js" => [
-        'type' => 'external',
-        'group' => JS_LIBRARY,
-      ],
-      "$base_url/google-payment.min.js" => [
-        'type' => 'external',
-        'group' => JS_LIBRARY,
-      ],
+      static::GOOGLE_PAY_JS => $js_options,
+      "$base_url/client.min.js" => $js_options,
+      "$base_url/google-payment.min.js" => $js_options,
     ];
-
     return $form;
   }
 

@@ -5,7 +5,12 @@ import { GooglePayElement } from './google-pay-element'
 
 const $ = jQuery
 Drupal.behaviors.braintree_payment = {}
+Drupal.behaviors.braintree_payment.element_map = {
+  'braintree_payment_credit_card': CreditCardElement,
+  'braintree_payment_google_pay': GooglePayElement,
+}
 Drupal.behaviors.braintree_payment.attach = function (context, settings) {
+  const behavior = this
   if (!Drupal.payment_handler) {
     Drupal.payment_handler = {}
   }
@@ -18,18 +23,11 @@ Drupal.behaviors.braintree_payment.attach = function (context, settings) {
     const pmid = $method.attr('data-pmid')
     const methodSettings = settings.braintree_payment['pmid_' + pmid]
 
-    let element = {}
-    switch (methodSettings.method) {
-      case 'braintree_payment_credit_card':
-        element = new CreditCardElement($method, methodSettings)
-        break
-      case 'braintree_payment_google_pay':
-        element = new GooglePayElement($method, methodSettings)
-        break
-    }
-
-    Drupal.payment_handler[pmid] = function (pmid, $method, submitter) {
-      element.validate(submitter)
+    if (methodSettings.method in behavior.element_map) {
+      const element = new behavior.element_map[methodSettings.method]($method, methodSettings)
+      Drupal.payment_handler[pmid] = function (pmid, $method, submitter) {
+        element.validate(submitter)
+      }
     }
   })
 }

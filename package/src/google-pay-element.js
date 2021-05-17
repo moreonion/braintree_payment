@@ -1,4 +1,4 @@
-/* global Drupal, jQuery, braintree */
+/* global Drupal, jQuery, braintree, google */
 
 import { MethodElement } from './method-element'
 
@@ -20,7 +20,7 @@ class GooglePayElement extends MethodElement {
    * Make sure the Braintree libraries have been loaded before using them.
    */
   waitForLibrariesThenInit () {
-    if (typeof braintree !== 'undefined' && typeof braintree.client !== 'undefined' && typeof braintree.googlePayment !== 'undefined' && typeof google !== 'undefined') {
+    if (typeof google !== 'undefined' && typeof google.payments !== 'undefined' && typeof google.payments.api !== 'undefined' && typeof braintree !== 'undefined' && typeof braintree.googlePayment !== 'undefined') {
       this.initPayButton()
     }
     else {

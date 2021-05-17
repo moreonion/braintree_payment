@@ -6,6 +6,7 @@
  */
 
 use Drupal\braintree_payment\CreditCardController;
+use Drupal\braintree_payment\GooglePayController;
 
 /**
  * Implemnts hook_theme().
@@ -23,10 +24,9 @@ function braintree_payment_theme() {
  * Implements hook_payment_method_controller_info().
  */
 function braintree_payment_payment_method_controller_info() {
-  return array(
-    'braintree_payment_credit_card' => '\Drupal\braintree_payment\CreditCardController',
-    'braintree_payment_google_pay' => '\Drupal\braintree_payment\GooglePayController',
-  );
+  $info['braintree_payment_credit_card'] = CreditCardController::class;
+  $info['braintree_payment_google_pay'] = GooglePayController::class;
+  return $info;
 }
 
 /**

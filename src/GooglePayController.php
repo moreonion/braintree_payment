@@ -3,7 +3,7 @@
 namespace Drupal\braintree_payment;
 
 /**
- * Defines the controller class of the Braintree payment method.
+ * Defines the controller class of the Braintree google pay payment method.
  */
 class GooglePayController extends BraintreeController {
 
