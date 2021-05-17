@@ -1,6 +1,7 @@
 /* global Drupal, jQuery */
 
 import { CreditCardElement } from './credit-card-element'
+import { GooglePayElement } from './google-pay-element'
 
 const $ = jQuery
 Drupal.behaviors.braintree_payment = {}
@@ -21,6 +22,9 @@ Drupal.behaviors.braintree_payment.attach = function (context, settings) {
     switch (methodSettings.method) {
       case 'braintree_payment_credit_card':
         element = new CreditCardElement($method, methodSettings)
+        break
+      case 'braintree_payment_google_pay':
+        element = new GooglePayElement($method, methodSettings)
         break
     }
 

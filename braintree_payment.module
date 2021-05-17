@@ -25,6 +25,7 @@ function braintree_payment_theme() {
 function braintree_payment_payment_method_controller_info() {
   return array(
     'braintree_payment_credit_card' => '\Drupal\braintree_payment\CreditCardController',
+    'braintree_payment_google_pay' => '\Drupal\braintree_payment\GooglePayController',
   );
 }
 
