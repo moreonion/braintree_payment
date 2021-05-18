@@ -5,6 +5,7 @@
  * Defines Credit Card Controller Information and libraries.
  */
 
+use Drupal\braintree_payment\ApplePayController;
 use Drupal\braintree_payment\CreditCardController;
 use Drupal\braintree_payment\GooglePayController;
 
@@ -26,6 +27,7 @@ function braintree_payment_theme() {
 function braintree_payment_payment_method_controller_info() {
   $info['braintree_payment_credit_card'] = CreditCardController::class;
   $info['braintree_payment_google_pay'] = GooglePayController::class;
+  $info['braintree_payment_apple_pay'] = ApplePayController::class;
   return $info;
 }
 

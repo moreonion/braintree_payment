@@ -2,12 +2,14 @@
 
 import { CreditCardElement } from './credit-card-element'
 import { GooglePayElement } from './google-pay-element'
+import { ApplePayElement } from './apple-pay-element'
 
 const $ = jQuery
 Drupal.behaviors.braintree_payment = {}
 Drupal.behaviors.braintree_payment.element_map = {
   'braintree_payment_credit_card': CreditCardElement,
   'braintree_payment_google_pay': GooglePayElement,
+  'braintree_payment_apple_pay': ApplePayElement,
 }
 Drupal.behaviors.braintree_payment.attach = function (context, settings) {
   const behavior = this
