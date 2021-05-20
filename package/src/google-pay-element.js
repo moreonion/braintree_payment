@@ -33,7 +33,37 @@ class GooglePayElement extends MethodElement {
   /**
    * Initialize the Google Pay button.
    */
-  initPayButton () {}
+  initPayButton () {
+    const paymentsClient = new google.payments.api.PaymentsClient({
+      environment: 'TEST' // Or 'PRODUCTION'
+    })
+    braintree.client.create({
+      authorization: this.settings.payment_token
+    }).then((clientInstance) => {
+      return braintree.googlePayment.create({
+        client: clientInstance,
+        googlePayVersion: 2,
+        googleMerchantId: 'merchant-id-from-google',
+      })
+    }).then((googlePaymentInstance) => {
+      return paymentsClient.isReadyToPay({
+        // see https://developers.google.com/pay/api/web/reference/object#IsReadyToPayRequest for all options
+        apiVersion: 2,
+        apiVersionMinor: 0,
+        allowedPaymentMethods: googlePaymentInstance.createPaymentDataRequest().allowedPaymentMethods,
+        existingPaymentMethodRequired: true
+      })
+    }).then((response) => {
+      if (response.result) {
+        const button = paymentsClient.createButton({
+          onClick: () => {
+            console.log('TODO click handler')
+          },
+        })
+        this.$element.append(button)
+      }
+    })
+  }
 
   /**
    * Validate the input data.
