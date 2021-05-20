@@ -153,7 +153,7 @@ class BraintreeController extends \PaymentMethodController {
       $payment->braintree = [
         'braintree_id' => $result->transaction->id,
         'type' => $result->transaction->paymentInstrumentType,
-        'threeds_status' => $result->transaction->threeDSecureInfo->status,
+        'threeds_status' => $result->transaction->threeDSecureInfo->status ?? NULL,
       ];
       $payment->setStatus(new \PaymentStatusItem(PAYMENT_STATUS_SUCCESS));
       $this->entity_save('payment', $payment);
