@@ -34,6 +34,7 @@ class GooglePayElement extends MethodElement {
    * Initialize the Google Pay button.
    */
   initPayButton () {
+    const element = this
     const paymentsClient = new google.payments.api.PaymentsClient({
       environment: 'TEST' // Or 'PRODUCTION'
     })
@@ -46,8 +47,8 @@ class GooglePayElement extends MethodElement {
         googleMerchantId: 'merchant-id-from-google',
       })
     }).then((googlePaymentInstance) => {
+      element.googlePaymentInstance = googlePaymentInstance
       return paymentsClient.isReadyToPay({
-        // see https://developers.google.com/pay/api/web/reference/object#IsReadyToPayRequest for all options
         apiVersion: 2,
         apiVersionMinor: 0,
         allowedPaymentMethods: googlePaymentInstance.createPaymentDataRequest().allowedPaymentMethods,
@@ -56,13 +57,36 @@ class GooglePayElement extends MethodElement {
     }).then((response) => {
       if (response.result) {
         const button = paymentsClient.createButton({
-          onClick: () => {
-            console.log('TODO click handler')
+          onClick: function () {
+            const paymentDataRequest = element.googlePaymentInstance.createPaymentDataRequest({
+              transactionInfo: element.settings.transactionInfo,
+            })
+            const cardPaymentMethod = paymentDataRequest.allowedPaymentMethods[0]
+            cardPaymentMethod.parameters.billingAddressRequired = true
+            cardPaymentMethod.parameters.billingAddressParameters = {
+              format: 'FULL',
+              phoneNumberRequired: true
+            }
+            paymentsClient.loadPaymentData(paymentDataRequest).then((paymentData) => {
+              return element.googlePaymentInstance.parseResponse(paymentData)
+            }).then((result) => {
+              element.setNonce(result.nonce)
+              element.submitForm()
+              // Send result.nonce to your server
+              // result.type may be either "AndroidPayCard" or "PayPalAccount", and
+              // paymentData will contain the billingAddress for card payments
+            }).catch((err) => {
+              element.errorHandler(err)
+            })
           },
         })
         this.$element.append(button)
       }
     })
+  }
+
+  submitForm() {
+    this.$element.closest('form').find('input[type="submit"]:not([formnovalidate])').click()
   }
 
   /**
@@ -71,7 +95,13 @@ class GooglePayElement extends MethodElement {
    * @param {object} submitter - The Drupal form submitter.
    */
   validate (submitter) {
-    submitter.ready()
+    const nonce = this.$element.find('[name$="[braintree-payment-nonce]"]').val()
+    if (nonce.length > 0) {
+      submitter.ready()
+    }
+    else {
+      submitter.error()
+    }
   }
 }
 
