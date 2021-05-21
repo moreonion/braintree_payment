@@ -124,6 +124,19 @@ class MethodElement {
   }
 
   /**
+   * Remove all validation errors from previous attempts.
+   */
+  resetValidation () {
+    $('.mo-dialog-wrapper').addClass('visible')
+    $('.braintree-error').remove()
+    if (this.clientsideValidationEnabled()) {
+      const $validator = Drupal.myClientsideValidation.validators[this.form_id]
+      $validator.prepareForm()
+      $validator.hideErrors()
+    }
+  }
+
+  /**
    * Checks whether clientside validation is enabled for this form.
    */
   clientsideValidationEnabled () {

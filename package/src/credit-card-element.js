@@ -114,14 +114,7 @@ class CreditCardElement extends MethodElement {
    * @param {object} submitter - The Drupal form submitter.
    */
   validate (submitter) {
-    $('.mo-dialog-wrapper').addClass('visible')
-    $('.braintree-error').remove()
-    if (this.clientsideValidationEnabled()) {
-      const $validator = Drupal.myClientsideValidation.validators[this.form_id]
-      $validator.prepareForm()
-      $validator.hideErrors()
-    }
-
+    this.resetValidation()
     this.$wrappers.removeClass('invalid')
     this.hostedFields.tokenize().then((payload) => {
       return this.client3ds.verifyCard($.extend({}, this.extraData(), {

@@ -95,6 +95,7 @@ class GooglePayElement extends MethodElement {
    * @param {object} submitter - The Drupal form submitter.
    */
   validate (submitter) {
+    this.resetValidation()
     const nonce = this.$element.find('[name$="[braintree-payment-nonce]"]').val()
     if (nonce.length > 0) {
       submitter.ready()
