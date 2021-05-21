@@ -34,8 +34,7 @@ class GooglePayElement extends MethodElement {
    * Initialize the Google Pay button.
    */
   initPayButton () {
-    const element = this
-    const paymentsClient = new google.payments.api.PaymentsClient({
+    this.paymentsClient = new google.payments.api.PaymentsClient({
       environment: 'TEST' // Or 'PRODUCTION'
     })
     braintree.client.create({
@@ -47,8 +46,8 @@ class GooglePayElement extends MethodElement {
         googleMerchantId: 'merchant-id-from-google',
       })
     }).then((googlePaymentInstance) => {
-      element.googlePaymentInstance = googlePaymentInstance
-      return paymentsClient.isReadyToPay({
+      this.googlePaymentInstance = googlePaymentInstance
+      return this.paymentsClient.isReadyToPay({
         apiVersion: 2,
         apiVersionMinor: 0,
         allowedPaymentMethods: googlePaymentInstance.createPaymentDataRequest().allowedPaymentMethods,
@@ -56,28 +55,12 @@ class GooglePayElement extends MethodElement {
       })
     }).then((response) => {
       if (response.result) {
-        const button = paymentsClient.createButton({
+        // Use an explicit closure because the click handler explicitly binds
+        // `this` to the triggering element.
+        const element = this
+        const button = this.paymentsClient.createButton({
           onClick: function () {
-            const paymentDataRequest = element.googlePaymentInstance.createPaymentDataRequest({
-              transactionInfo: element.settings.transactionInfo,
-            })
-            const cardPaymentMethod = paymentDataRequest.allowedPaymentMethods[0]
-            cardPaymentMethod.parameters.billingAddressRequired = true
-            cardPaymentMethod.parameters.billingAddressParameters = {
-              format: 'FULL',
-              phoneNumberRequired: true
-            }
-            paymentsClient.loadPaymentData(paymentDataRequest).then((paymentData) => {
-              return element.googlePaymentInstance.parseResponse(paymentData)
-            }).then((result) => {
-              element.setNonce(result.nonce)
-              element.submitForm()
-              // Send result.nonce to your server
-              // result.type may be either "AndroidPayCard" or "PayPalAccount", and
-              // paymentData will contain the billingAddress for card payments
-            }).catch((err) => {
-              element.errorHandler(err)
-            })
+            element.showPaymentForm()
           },
         })
         this.$element.append(button)
@@ -85,8 +68,35 @@ class GooglePayElement extends MethodElement {
     })
   }
 
-  submitForm() {
-    this.$element.closest('form').find('input[type="submit"]:not([formnovalidate])').click()
+  showPaymentForm () {
+    const paymentDataRequest = this.googlePaymentInstance.createPaymentDataRequest({
+      transactionInfo: this.settings.transactionInfo,
+    })
+    const cardPaymentMethod = paymentDataRequest.allowedPaymentMethods[0]
+    cardPaymentMethod.parameters.billingAddressRequired = true
+    cardPaymentMethod.parameters.billingAddressParameters = {
+      format: 'FULL',
+      phoneNumberRequired: true
+    }
+    this.paymentsClient.loadPaymentData(paymentDataRequest).then((paymentData) => {
+      return this.googlePaymentInstance.parseResponse(paymentData)
+    }).then((result) => {
+      // result.type may be either "AndroidPayCard" or "PayPalAccount", and
+      // paymentData will contain the billingAddress for card payments
+      this.setNonce(result.nonce)
+      this.submitForm()
+    }).catch((err) => {
+      this.errorHandler(err)
+    })
+  }
+
+  /**
+   * Submit the surrounding form.
+   */
+  submitForm () {
+    // As a heuristic assume that the first submit button without formnovalidate
+    // is the one we should trigger.
+    this.$element.closest('form').find('[type="submit"]:not([formnovalidate])').click()
   }
 
   /**
