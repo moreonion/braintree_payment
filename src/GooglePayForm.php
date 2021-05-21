@@ -35,11 +35,13 @@ class GooglePayForm implements PaymentFormInterface {
       "$base_url/google-payment.min.js" => $js_options,
     ];
     $pmid = $payment->method->pmid;
-    $form['#attached']['js'][0]['data']['braintree_payment']["pmid_$pmid"]['transactionInfo'] = [
+    $settings = &$form['#attached']['js'][0]['data']['braintree_payment']["pmid_$pmid"];
+    $settings['transactionInfo'] = [
       'currencyCode' => $payment->currency_code,
       'totalPriceStatus' => 'FINAL',
       'totalPrice' => (string) $payment->totalAmount(TRUE),
     ];
+    $settings['sandbox'] = $payment->method->controller_data['environment'] == 'sandbox';
     return $form;
   }
 

@@ -33,7 +33,7 @@ class GooglePayElement extends MethodElement {
    */
   initPayButton () {
     this.paymentsClient = new google.payments.api.PaymentsClient({
-      environment: 'TEST' // Or 'PRODUCTION'
+      environment: this.settings.sandbox ? 'TEST' : 'PRODUCTION',
     })
     braintree.client.create({
       authorization: this.settings.payment_token
