@@ -79,12 +79,7 @@ class BraintreeConfigurationForm implements MethodFormInterface {
       '#default_value' => $cd['merchant_account_id'],
     ];
 
-    $form['force_liability_shift'] = [
-      '#type' => 'checkbox',
-      '#title' => t('Refuse payments without liability shift'),
-    ];
-
-    $form['input_settings'] = $customer_data_form->configurationForm($method->controller_data['input_settings']);
+    $form['input_settings'] = ['#weight' => 100] + $customer_data_form->configurationForm($method->controller_data['input_settings']);
 
     return $form;
   }

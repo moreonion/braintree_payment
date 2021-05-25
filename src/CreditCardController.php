@@ -8,6 +8,22 @@ namespace Drupal\braintree_payment;
 class CreditCardController extends BraintreeController {
 
   /**
+   * Default values for the controller configuration.
+   *
+   * @var array
+   */
+  public $controller_data_defaults = [
+    'environment' => 'sandbox',
+    'merchant_id' => '',
+    'merchant_account_id' => '',
+    'private_key' => '',
+    'public_key'  => '',
+    'input_settings' => [],
+    'enable_recurrent_payments' => 0,
+    'force_liability_shift' => FALSE,
+  ];
+
+  /**
    * Create a new controller instance.
    */
   public function __construct() {
@@ -23,6 +39,16 @@ class CreditCardController extends BraintreeController {
    */
   public function paymentForm() {
     return new CreditCardForm();
+  }
+
+  /**
+   * Get a form for configuring the payment method.
+   *
+   * @return CreditCardConfigurationForm
+   *   A new configuration form.
+   */
+  public function configurationForm() {
+    return new CreditCardConfigurationForm();
   }
 
 }
