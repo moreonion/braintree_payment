@@ -1,8 +1,6 @@
-/* global Drupal, jQuery, braintree, google */
+/* global braintree, google */
 
 import { MethodElement } from './method-element'
-
-const $ = jQuery
 
 class GooglePayElement extends MethodElement {
   /**
