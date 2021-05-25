@@ -41,7 +41,7 @@ class GooglePayElement extends MethodElement {
       return braintree.googlePayment.create({
         client: clientInstance,
         googlePayVersion: 2,
-        googleMerchantId: 'merchant-id-from-google',
+        googleMerchantId: this.settings.googlePayMerchantId,
       })
     }).then((googlePaymentInstance) => {
       this.googlePaymentInstance = googlePaymentInstance

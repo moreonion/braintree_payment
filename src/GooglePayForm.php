@@ -26,7 +26,7 @@ class GooglePayForm implements PaymentFormInterface {
    */
   public function form(array $form, array &$form_state, \Payment $payment) {
     $form = BraintreeForm::form($form, $form_state, $payment);
-    // Additional JS
+    // Attac additional JS.
     $base_url = BraintreeForm::jsUrl();
     $js_options = ['type' => 'external', 'group' => JS_LIBRARY];
     $form['#attached']['js'] += [
@@ -41,7 +41,9 @@ class GooglePayForm implements PaymentFormInterface {
       'totalPriceStatus' => 'FINAL',
       'totalPrice' => (string) $payment->totalAmount(TRUE),
     ];
-    $settings['sandbox'] = $payment->method->controller_data['environment'] == 'sandbox';
+    $cd = $payment->method->controller_data;
+    $settings['sandbox'] = $cd['environment'] == 'sandbox';
+    $settings['googlePayMerchantId'] = $cd['google_pay_merchant_id'];
     return $form;
   }
 
