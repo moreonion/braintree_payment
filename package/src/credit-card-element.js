@@ -164,6 +164,39 @@ class CreditCardElement extends MethodElement {
       submitter.error()
     })
   }
+
+  /**
+   * Collects values from extra data fields.
+   */
+  extraData () {
+    const data = {}
+    this.$element.find('[data-braintree-name]').each(function () {
+      const keys = $(this).attr('data-braintree-name').split('.')
+      const value = $(this).val()
+      CreditCardElement.deepSet(data, keys, value)
+    })
+    return data
+  }
+
+  /**
+   * Sets a value on a (nested) key.
+   *
+   * @param {object} obj - The object to update.
+   * @param {array} keys - The path of keys to the value.
+   * @param value - The new value.
+   */
+  static deepSet (obj, keys, value) {
+    const key = keys.shift()
+    if (keys.length > 0) {
+      if (typeof obj[key] === 'undefined') {
+        obj[key] = {}
+      }
+      CreditCardElement.deepSet(obj[key], keys, value)
+    }
+    else {
+      obj[key] = value
+    }
+  }
 }
 
 export { CreditCardElement }

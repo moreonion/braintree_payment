@@ -24,7 +24,6 @@ abstract class BraintreeForm {
    */
   public static function form(array $form, array &$form_state, \Payment $payment) {
     $method = $payment->method;
-    $customer_data_form = $method->controller->customerDataForm();
 
     $form['braintree-payment-nonce'] = array(
       '#type' => 'hidden',
@@ -51,8 +50,6 @@ abstract class BraintreeForm {
       '#value' => (string) $payment->totalAmount(TRUE),
       '#attributes' => ['data-braintree-name' => 'amount'],
     ];
-
-    $form['extra_data'] = ['#weight' => 100] + $customer_data_form->form($method->controller_data['input_settings'], $payment->contextObj);
 
     return $form;
   }

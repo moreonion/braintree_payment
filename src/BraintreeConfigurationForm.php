@@ -29,7 +29,6 @@ class BraintreeConfigurationForm implements MethodFormInterface {
    */
   public function form(array $form, array &$form_state, \PaymentMethod $method) {
     $cd = $method->controller_data;
-    $customer_data_form = $method->controller->customerDataForm();
 
     $library = libraries_detect('braintree-php');
     if (empty($library['installed'])) {
@@ -78,8 +77,6 @@ class BraintreeConfigurationForm implements MethodFormInterface {
       '#description' => t("Payments are sent to this account. Leave empty to use the merchant's default account"),
       '#default_value' => $cd['merchant_account_id'],
     ];
-
-    $form['input_settings'] = ['#weight' => 100] + $customer_data_form->configurationForm($method->controller_data['input_settings']);
 
     return $form;
   }

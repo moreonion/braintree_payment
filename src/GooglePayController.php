@@ -20,7 +20,6 @@ class GooglePayController extends BraintreeController {
     'private_key' => '',
     'public_key'  => '',
     'force_liability_shift' => FALSE,
-    'input_settings' => [],
     'enable_recurrent_payments' => 0,
   ];
 

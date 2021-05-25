@@ -19,26 +19,6 @@ class MethodElement {
   }
 
   /**
-   * Sets a value on a (nested) key.
-   *
-   * @param {object} obj - The object to update.
-   * @param {array} keys - The path of keys to the value.
-   * @param value - The new value.
-   */
-  static deepSet (obj, keys, value) {
-    const key = keys.shift()
-    if (keys.length > 0) {
-      if (typeof obj[key] === 'undefined') {
-        obj[key] = {}
-      }
-      MethodElement.deepSet(obj[key], keys, value)
-    }
-    else {
-      obj[key] = value
-    }
-  }
-
-  /**
    * Displays a loading animation.
    */
   startLoading () {
@@ -61,19 +41,6 @@ class MethodElement {
    */
   setNonce (value) {
     this.$element.find('[name$="[braintree-payment-nonce]"]').val(value)
-  }
-
-  /**
-   * Collects values from extra data fields.
-   */
-  extraData () {
-    const data = {}
-    this.$element.find('[data-braintree-name]').each(function () {
-      const keys = $(this).attr('data-braintree-name').split('.')
-      const value = $(this).val()
-      MethodElement.deepSet(data, keys, value)
-    })
-    return data
   }
 
   /**

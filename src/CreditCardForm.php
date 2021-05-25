@@ -56,7 +56,11 @@ class CreditCardForm extends _CreditCardForm {
       '#parents' => ['cc-year'],
     ] + $form['expiry_date']['year'];
 
-    // Additional JS
+    // Add extra data.
+    $customer_data_form = $payment->method->controller->customerDataForm();
+    $form['extra_data'] = ['#weight' => 100] + $customer_data_form->form($payment->method->controller_data['input_settings'], $payment->contextObj);
+
+    // Additional JS.
     $base_url = BraintreeForm::jsUrl();
     $form['#attached']['js'] += [
       "$base_url/hosted-fields.min.js" => [
