@@ -27,9 +27,28 @@ class GooglePayConfigurationForm extends BraintreeConfigurationForm {
       '#type' => 'textfield',
       '#title' => t('Google Pay merchant ID'),
       '#default_value' => $cd['google_pay_merchant_id'],
-      '#required' => TRUE,
     ];
     return $form;
+  }
+
+  /**
+   * Validate the submitted values.
+   *
+   * @param array $element
+   *   The Drupal elements array.
+   * @param array $form_state
+   *   The Drupal form_state array.
+   * @param \PaymentMethod $method
+   *   The payment method.
+   */
+  public function validate(array $element, array &$form_state, \PaymentMethod $method) {
+    $cd = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
+
+    if ($cd['environment'] == 'production' && empty($cd['google_pay_merchant_id'])) {
+      $msg = t('Google Pay merchant ID is required for production.');
+      form_error($element['google_pay_merchant_id'], $msg);
+    }
+    parent::validate($element, $form_state, $method);
   }
 
 }
