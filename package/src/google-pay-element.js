@@ -18,7 +18,7 @@ class GooglePayElement extends MethodElement {
    * Make sure the Braintree libraries have been loaded before using them.
    */
   waitForLibrariesThenInit () {
-    if (typeof google !== 'undefined' && typeof google.payments !== 'undefined' && typeof google.payments.api !== 'undefined' && typeof braintree !== 'undefined' && typeof braintree.googlePayment !== 'undefined') {
+    if (typeof google !== 'undefined' && typeof google.payments !== 'undefined' && typeof google.payments.api !== 'undefined' && typeof braintree !== 'undefined' && typeof braintree.client !== 'undefined' && typeof braintree.googlePayment !== 'undefined') {
       this.initPayButton()
     }
     else {
