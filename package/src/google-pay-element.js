@@ -113,6 +113,7 @@ class GooglePayElement extends MethodElement {
       this.setNonce(result.nonce)
       this.submitForm()
     }).catch((err) => {
+      this.resetValidation()
       this.errorHandler(err.statusMessage || err.statusCode)
     })
   }
