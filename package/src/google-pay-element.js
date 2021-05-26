@@ -11,7 +11,20 @@ class GooglePayElement extends MethodElement {
    */
   constructor ($element, settings) {
     super($element, settings)
+    this.hidePaymethodSelectRadio()
     this.waitForLibrariesThenInit()
+  }
+
+  /**
+   * Hide the paymethod select radio for this payment method.
+   */
+  hidePaymethodSelectRadio () {
+    const pmid = this.$element.data('pmid')
+    const $radio = this.$element.closest('form').find(`[name*="[paymethod_select]"][value=${pmid}]`)
+    if ($radio.length) {
+      const $label = $radio.siblings(`label[for="${$radio.attr('id')}"]`)
+      this.$paymethodRadio = $radio.add($label).hide()
+    }
   }
 
   /**
@@ -65,12 +78,24 @@ class GooglePayElement extends MethodElement {
             element.showPaymentForm()
           },
         })
-        this.$element.append(button)
+        if (this.$paymethodRadio) {
+          // Set button size to match paymethod select radio labels.
+          $(button).css('height', this.$paymethodRadio.filter('label').css('height'))
+          // Append button after the paymethod select radios.
+          this.$paymethodRadio.closest('.form-item').append(button)
+        }
+        else {
+          this.$element.append(button)
+        }
       }
     })
   }
 
+  /**
+   * Callback function for the Google Pay button.
+   */
   showPaymentForm () {
+    this.$paymethodRadio.filter('input').prop('checked', true).trigger('change')
     const paymentDataRequest = this.googlePaymentInstance.createPaymentDataRequest({
       transactionInfo: this.settings.transactionInfo,
     })
