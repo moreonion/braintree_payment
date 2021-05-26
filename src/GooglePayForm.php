@@ -44,6 +44,8 @@ class GooglePayForm implements PaymentFormInterface {
     $cd = $payment->method->controller_data;
     $settings['sandbox'] = $cd['environment'] == 'sandbox';
     $settings['googlePayMerchantId'] = $cd['google_pay_merchant_id'];
+    $settings['googlePayButtonType'] = $cd['google_pay_button_type'];
+    $settings['googlePayButtonColor'] = $cd['google_pay_button_color'];
     return $form;
   }
 

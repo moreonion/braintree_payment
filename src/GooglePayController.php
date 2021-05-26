@@ -17,6 +17,8 @@ class GooglePayController extends BraintreeController {
     'merchant_id' => '',
     'merchant_account_id' => '',
     'google_pay_merchant_id' => '',
+    'google_pay_button_type' => 'buy',
+    'google_pay_button_color' => 'default',
     'private_key' => '',
     'public_key'  => '',
     'force_liability_shift' => FALSE,

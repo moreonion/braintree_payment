@@ -57,6 +57,10 @@ class GooglePayElement extends MethodElement {
         // `this` to the triggering element.
         const element = this
         const button = this.paymentsClient.createButton({
+          buttonSizeMode: 'fill',
+          buttonType: this.settings.googlePayButtonType,
+          buttonColor: this.settings.googlePayButtonColor,
+          buttonLocale: document.documentElement.lang.substring(0, 2),
           onClick: function () {
             element.showPaymentForm()
           },
