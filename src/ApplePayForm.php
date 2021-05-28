@@ -10,6 +10,33 @@ use Drupal\payment_forms\PaymentFormInterface;
 class ApplePayForm implements PaymentFormInterface {
 
   /**
+   * Collect data for the payment request (passed to the client side JS).
+   *
+   * @param \Payment $payment
+   *   The payment object.
+   *
+   * @return array
+   *   The data array.
+   */
+  private function requestData(\Payment $payment) {
+    return [
+      'total' => [
+        'type' => 'final',
+        'amount' => (string) $payment->totalAmount(TRUE),
+        // Businessname, should match bank statement → make configurable?
+        'label' => variable_get('site_name', 'Impact Stack'),
+      ],
+      // Available: "email"?, "name", "phone", "postalAddress".
+      'requiredBillingContactFields' => ['name', 'postalAddress'],
+      // Add form values if desired.
+      // see https://developer.apple.com/documentation/apple_pay_on_the_web/applepaypaymentcontact
+      'billingContact' => [],
+      // Any reference we'd like to include, pid maybe?
+      'applicationData' => drupal_base64_encode(''),
+    ];
+  }
+
+  /**
    * Add form elements for Braintree Apple Pay payments.
    *
    * @param array $form
@@ -31,6 +58,9 @@ class ApplePayForm implements PaymentFormInterface {
       "$base_url/client.min.js" => $js_options,
       "$base_url/apple-pay.min.js" => $js_options,
     ];
+    $pmid = $payment->method->pmid;
+    $settings = &$form['#attached']['js'][0]['data']['braintree_payment']["pmid_$pmid"];
+    $settings['requestData'] = $this->requestData($payment);
     return $form;
   }
 

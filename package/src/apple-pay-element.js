@@ -61,9 +61,7 @@ class ApplePayElement extends MethodElement {
       const $button = this.generateButton()
       this.$element.append($button)
       $button.on('click', () => {
-        const paymentRequest = applePayInstance.createPaymentRequest({
-          total: { label: 'My Store', amount: '19.99' }
-        })
+        const paymentRequest = applePayInstance.createPaymentRequest(this.settings.requestData)
         const session = this.applePay.session = new ApplePaySession(3, paymentRequest)
         session.onvalidatemerchant = this.validateMerchantHandler
         session.onpaymentauthorized = this.paymentAuthorizedHandler
@@ -108,6 +106,7 @@ class ApplePayElement extends MethodElement {
   validateMerchantHandler (event) {
     this.applePay.instance.performValidation({
       validationURL: event.validationURL,
+      // UTF-8 max 128 chars – use same as requestData.total.label?
       displayName: 'My Store'
     }).then((merchantSession) => {
       this.applePay.session.completeMerchantValidation(merchantSession)
