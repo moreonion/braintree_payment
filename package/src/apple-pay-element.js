@@ -58,7 +58,7 @@ class ApplePayElement extends MethodElement {
       })
     }).then((applePayInstance) => {
       this.applePay.instance = applePayInstance
-      const $button = $('<button>')
+      const $button = this.generateButton()
       this.$element.append($button)
       $button.on('click', () => {
         const paymentRequest = applePayInstance.createPaymentRequest({
@@ -72,6 +72,34 @@ class ApplePayElement extends MethodElement {
     }).catch((err) => {
       this.errorHandler(err.message || err)
     })
+  }
+
+  /**
+   * Generate Apple Pay button markup and styles.
+   */
+  generateButton () {
+    const $button = $(`
+    <button
+      type="button"
+      class="button apple-pay"
+      aria-label="Apple Pay"
+      lang=${document.documentElement.lang.substring(0, 2)}
+    ><span>Apple Pay</span>
+    </button>`)
+    const $styles = `<style type="text/css">
+    @supports (-webkit-appearance: -apple-pay-button) {
+      button.apple-pay {
+        -webkit-appearance: -apple-pay-button;
+        -apple-pay-button-style: black;
+        width: 100%;
+      }
+      button.apple-pay span {
+        visibility: hidden;
+      }
+    }
+    </style>`
+    $('head').append($styles)
+    return $button
   }
 
   /**
