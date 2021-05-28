@@ -82,7 +82,7 @@ class GooglePayElement extends MethodElement {
           // Set button size to match paymethod select radio labels.
           $(button).css('height', this.$paymethodRadio.filter('label').css('height'))
           // Append button after the paymethod select radios.
-          this.$paymethodRadio.closest('.form-item').append(button)
+          this.$paymethodRadio.parent().closest('.paymethod-select-radios').append(button)
         }
         else {
           this.$element.append(button)
