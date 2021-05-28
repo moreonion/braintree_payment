@@ -1,4 +1,4 @@
-/* global Drupal, jQuery, braintree */
+/* global Drupal, jQuery, braintree, ApplePaySession */
 
 import { MethodElement } from './method-element'
 
@@ -13,14 +13,29 @@ class ApplePayElement extends MethodElement {
    */
   constructor ($element, settings) {
     super($element, settings)
-    this.waitForLibrariesThenInit()
+    if (this.checkCompatibility()) {
+      this.waitForLibrariesThenInit()
+    }
+  }
+
+  /**
+   * Check if Apple Pay is supported by the browser.
+   */
+  checkCompatibility () {
+    if (typeof ApplePaySession !== 'undefined' && ApplePaySession.supportsVersion(3) && ApplePaySession.canMakePayments()) {
+      return true
+    }
+    else {
+      this.$element.append(`<p>${Drupal.t('This browser does not support Apple Pay.')}</p>`)
+      return false
+    }
   }
 
   /**
    * Make sure the Braintree libraries have been loaded before using them.
    */
   waitForLibrariesThenInit () {
-    if (typeof ApplePaySession !== 'undefined' && typeof braintree !== 'undefined' && typeof braintree.applePay !== 'undefined') {
+    if (typeof braintree !== 'undefined' && typeof braintree.client !== 'undefined' && typeof braintree.applePay !== 'undefined') {
       this.initPayButton()
     }
     else {
