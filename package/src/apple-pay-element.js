@@ -13,6 +13,7 @@ class ApplePayElement extends MethodElement {
    */
   constructor ($element, settings) {
     super($element, settings)
+    this.applePay = {}
     if (this.checkCompatibility()) {
       this.waitForLibrariesThenInit()
     }
@@ -48,7 +49,62 @@ class ApplePayElement extends MethodElement {
   /**
    * Initialize the Apple Pay button.
    */
-  initPayButton () {}
+  initPayButton () {
+    braintree.client.create({
+      authorization: this.settings.payment_token
+    }).then((clientInstance) => {
+      return braintree.applePay.create({
+        client: clientInstance
+      })
+    }).then((applePayInstance) => {
+      this.applePay.instance = applePayInstance
+      const $button = $('<button>')
+      this.$element.append($button)
+      $button.on('click', () => {
+        const paymentRequest = applePayInstance.createPaymentRequest({
+          total: { label: 'My Store', amount: '19.99' }
+        })
+        const session = this.applePay.session = new ApplePaySession(3, paymentRequest)
+        session.onvalidatemerchant = this.validateMerchantHandler
+        session.onpaymentauthorized = this.paymentAuthorizedHandler
+        session.begin()
+      })
+    }).catch((err) => {
+      this.errorHandler(err.message || err)
+    })
+  }
+
+  /**
+   * Request a new merchant session.
+   */
+  validateMerchantHandler (event) {
+    this.applePay.instance.performValidation({
+      validationURL: event.validationURL,
+      displayName: 'My Store'
+    }).then((merchantSession) => {
+      this.applePay.session.completeMerchantValidation(merchantSession)
+    }).catch((validationErr) => {
+      this.errorHandler(validationErr.message || validationErr)
+      this.applePay.session.abort()
+    })
+  };
+
+  /**
+   * Finalize the transaction.
+   */
+  paymentAuthorizedHandler (event) {
+    // If requested, address information is accessible in event.payment.
+    this.applePay.instance.tokenize({
+      token: event.payment.token
+    }).then((payload) => {
+      this.setNonce(payload.nonce)
+      // Dismiss the Apple Pay sheet.
+      this.applePay.session.completePayment(ApplePaySession.STATUS_SUCCESS)
+    }).catch((tokenizeErr) => {
+      this.errorHandler(tokenizeErr.message || tokenizeErr)
+      this.applePay.session.completePayment(ApplePaySession.STATUS_FAILURE)
+    })
+  };
 
   /**
    * Validate the input data.
@@ -56,7 +112,14 @@ class ApplePayElement extends MethodElement {
    * @param {object} submitter - The Drupal form submitter.
    */
   validate (submitter) {
-    submitter.ready()
+    this.resetValidation()
+    const nonce = this.$element.find('[name$="[braintree-payment-nonce]"]').val()
+    if (nonce.length > 0) {
+      submitter.ready()
+    }
+    else {
+      submitter.error()
+    }
   }
 }
 
