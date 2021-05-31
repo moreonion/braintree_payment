@@ -1,10 +1,10 @@
 /* global Drupal, jQuery, braintree, ApplePaySession */
 
-import { MethodElement } from './method-element'
+import { ButtonElement } from './button-element'
 
 const $ = jQuery
 
-class ApplePayElement extends MethodElement {
+class ApplePayElement extends ButtonElement {
   /**
    * Initializes a new ApplePayElement.
    *
@@ -59,7 +59,7 @@ class ApplePayElement extends MethodElement {
     }).then((applePayInstance) => {
       this.applePay.instance = applePayInstance
       const $button = this.generateButton()
-      this.$element.append($button)
+      this.renderButton($button)
       $button.on('click', () => {
         const paymentRequest = applePayInstance.createPaymentRequest(this.settings.requestData)
         const session = this.applePay.session = new ApplePaySession(3, paymentRequest)
@@ -113,7 +113,7 @@ class ApplePayElement extends MethodElement {
       this.errorHandler(validationErr.message || validationErr)
       this.applePay.session.abort()
     })
-  };
+  }
 
   /**
    * Finalize the transaction.
@@ -124,28 +124,13 @@ class ApplePayElement extends MethodElement {
       token: event.payment.token
     }).then((payload) => {
       this.setNonce(payload.nonce)
+      this.selectRadio()
       // Dismiss the Apple Pay sheet.
       this.applePay.session.completePayment(ApplePaySession.STATUS_SUCCESS)
     }).catch((tokenizeErr) => {
       this.errorHandler(tokenizeErr.message || tokenizeErr)
       this.applePay.session.completePayment(ApplePaySession.STATUS_FAILURE)
     })
-  };
-
-  /**
-   * Validate the input data.
-   *
-   * @param {object} submitter - The Drupal form submitter.
-   */
-  validate (submitter) {
-    this.resetValidation()
-    const nonce = this.$element.find('[name$="[braintree-payment-nonce]"]').val()
-    if (nonce.length > 0) {
-      submitter.ready()
-    }
-    else {
-      submitter.error()
-    }
   }
 }
 

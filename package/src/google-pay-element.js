@@ -1,8 +1,10 @@
-/* global braintree, google */
+/* global jQuery, braintree, google */
 
-import { MethodElement } from './method-element'
+import { ButtonElement } from './button-element'
 
-class GooglePayElement extends MethodElement {
+const $ = jQuery
+
+class GooglePayElement extends ButtonElement {
   /**
    * Initializes a new GooglePayElement.
    *
@@ -11,20 +13,7 @@ class GooglePayElement extends MethodElement {
    */
   constructor ($element, settings) {
     super($element, settings)
-    this.hidePaymethodSelectRadio()
     this.waitForLibrariesThenInit()
-  }
-
-  /**
-   * Hide the paymethod select radio for this payment method.
-   */
-  hidePaymethodSelectRadio () {
-    const pmid = this.$element.data('pmid')
-    const $radio = this.$element.closest('form').find(`[name*="[paymethod_select]"][value=${pmid}]`)
-    if ($radio.length) {
-      const $label = $radio.siblings(`label[for="${$radio.attr('id')}"]`)
-      this.$paymethodRadio = $radio.add($label).hide()
-    }
   }
 
   /**
@@ -78,15 +67,7 @@ class GooglePayElement extends MethodElement {
             element.showPaymentForm()
           },
         })
-        if (this.$paymethodRadio) {
-          // Set button size to match paymethod select radio labels.
-          $(button).css('height', this.$paymethodRadio.filter('label').css('height'))
-          // Append button after the paymethod select radios.
-          this.$paymethodRadio.parent().closest('.paymethod-select-radios').append(button)
-        }
-        else {
-          this.$element.append(button)
-        }
+        this.renderButton($(button))
       }
     })
   }
@@ -95,7 +76,7 @@ class GooglePayElement extends MethodElement {
    * Callback function for the Google Pay button.
    */
   showPaymentForm () {
-    this.$paymethodRadio.filter('input').prop('checked', true).trigger('change')
+    this.selectRadio()
     const paymentDataRequest = this.googlePaymentInstance.createPaymentDataRequest({
       transactionInfo: this.settings.transactionInfo,
     })
@@ -116,31 +97,6 @@ class GooglePayElement extends MethodElement {
       this.resetValidation()
       this.errorHandler(err.statusMessage || err.statusCode)
     })
-  }
-
-  /**
-   * Submit the surrounding form.
-   */
-  submitForm () {
-    // As a heuristic assume that the first submit button without formnovalidate
-    // is the one we should trigger.
-    this.$element.closest('form').find('[type="submit"]:not([formnovalidate])').first().click()
-  }
-
-  /**
-   * Validate the input data.
-   *
-   * @param {object} submitter - The Drupal form submitter.
-   */
-  validate (submitter) {
-    this.resetValidation()
-    const nonce = this.$element.find('[name$="[braintree-payment-nonce]"]').val()
-    if (nonce.length > 0) {
-      submitter.ready()
-    }
-    else {
-      submitter.error()
-    }
   }
 }
 
