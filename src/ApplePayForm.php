@@ -19,12 +19,12 @@ class ApplePayForm implements PaymentFormInterface {
    *   The data array.
    */
   private function requestData(\Payment $payment) {
+    $cd = $payment->method->controller_data;
     return [
       'total' => [
         'type' => 'final',
         'amount' => (string) $payment->totalAmount(TRUE),
-        // Businessname, should match bank statement → make configurable?
-        'label' => variable_get('site_name', 'Impact Stack'),
+        'label' => $cd['apple_pay_display_name'],
       ],
       // Available: "email"?, "name", "phone", "postalAddress".
       'requiredBillingContactFields' => ['name', 'postalAddress'],
@@ -51,7 +51,8 @@ class ApplePayForm implements PaymentFormInterface {
    */
   public function form(array $form, array &$form_state, \Payment $payment) {
     $form = BraintreeForm::form($form, $form_state, $payment);
-    // Additional JS
+
+    // Additional JS.
     $base_url = BraintreeForm::jsUrl();
     $js_options = ['type' => 'external', 'group' => JS_LIBRARY];
     $form['#attached']['js'] += [
@@ -61,6 +62,10 @@ class ApplePayForm implements PaymentFormInterface {
     $pmid = $payment->method->pmid;
     $settings = &$form['#attached']['js'][0]['data']['braintree_payment']["pmid_$pmid"];
     $settings['requestData'] = $this->requestData($payment);
+    $cd = $payment->method->controller_data;
+    $settings['displayName'] = $cd['apple_pay_display_name'];
+    $settings['buttonColor'] = $cd['apple_pay_button_color'];
+
     return $form;
   }
 

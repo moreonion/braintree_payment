@@ -7,6 +7,17 @@ namespace Drupal\braintree_payment;
  */
 class ApplePayController extends BraintreeController {
 
+  public $controller_data_defaults = [
+    'environment' => 'sandbox',
+    'merchant_id' => '',
+    'merchant_account_id' => '',
+    'apple_pay_display_name' => '',
+    'apple_pay_button_color' => 'black',
+    'private_key' => '',
+    'public_key'  => '',
+    'enable_recurrent_payments' => 0,
+  ];
+
   /**
    * Create a new controller instance.
    */
@@ -23,6 +34,16 @@ class ApplePayController extends BraintreeController {
    */
   public function paymentForm() {
     return new ApplePayForm();
+  }
+
+  /**
+   * Get a form for configuring the payment method.
+   *
+   * @return ApplePayConfigurationForm
+   *   A new configuration form.
+   */
+  public function configurationForm() {
+    return new ApplePayConfigurationForm();
   }
 
 }

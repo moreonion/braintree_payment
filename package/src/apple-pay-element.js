@@ -88,7 +88,7 @@ class ApplePayElement extends MethodElement {
     @supports (-webkit-appearance: -apple-pay-button) {
       button.apple-pay {
         -webkit-appearance: -apple-pay-button;
-        -apple-pay-button-style: black;
+        -apple-pay-button-style: ${this.settings.buttonColor};
         width: 100%;
       }
       button.apple-pay span {
@@ -106,8 +106,7 @@ class ApplePayElement extends MethodElement {
   validateMerchantHandler (event) {
     this.applePay.instance.performValidation({
       validationURL: event.validationURL,
-      // UTF-8 max 128 chars – use same as requestData.total.label?
-      displayName: 'My Store'
+      displayName: this.settings.displayName
     }).then((merchantSession) => {
       this.applePay.session.completeMerchantValidation(merchantSession)
     }).catch((validationErr) => {
