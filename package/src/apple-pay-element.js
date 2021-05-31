@@ -85,11 +85,14 @@ class ApplePayElement extends ButtonElement {
     ><span>Apple Pay</span>
     </button>`)
     const $styles = `<style type="text/css">
+    button.apple-pay {
+      width: 100%;
+      min-height: 40px;
+    }
     @supports (-webkit-appearance: -apple-pay-button) {
       button.apple-pay {
         -webkit-appearance: -apple-pay-button;
         -apple-pay-button-style: ${this.settings.buttonColor};
-        width: 100%;
       }
       button.apple-pay span {
         visibility: hidden;

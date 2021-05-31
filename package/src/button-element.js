@@ -40,8 +40,12 @@ class ButtonElement extends MethodElement {
    */
   renderButton ($button) {
     if (this.$paymethodRadio) {
-      // Set button size to match paymethod select radio labels.
-      $button.css('height', this.$paymethodRadio.filter('label').css('height'))
+      // Match paymethod select radio labels.
+      const $label = this.$paymethodRadio.filter('label')
+      $button.css('height', $label.css('height'))
+      $button.css('font-size', $label.css('font-size'))
+      $button.css('line-height', $label.css('line-height'))
+      $button.css('margin-bottom', $label.css('margin-bottom'))
       // Append button after the paymethod select radios.
       this.$paymethodRadio.parent().closest('.paymethod-select-radios').append($button)
     }
