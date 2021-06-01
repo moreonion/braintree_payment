@@ -69,6 +69,7 @@ class ApplePayElement extends ButtonElement {
         session.begin()
       })
     }).catch((err) => {
+      console.error(err)
       this.errorHandler(err.message || err)
     })
   }
@@ -114,6 +115,7 @@ class ApplePayElement extends ButtonElement {
     }).then((merchantSession) => {
       this.applePay.session.completeMerchantValidation(merchantSession)
     }).catch((validationErr) => {
+      console.error(validationErr)
       this.errorHandler(validationErr.message || validationErr)
       this.applePay.session.abort()
     })
@@ -132,6 +134,7 @@ class ApplePayElement extends ButtonElement {
       this.applePay.session.completePayment(ApplePaySession.STATUS_SUCCESS)
       this.submitForm()
     }).catch((tokenizeErr) => {
+      console.error(tokenizeErr)
       this.errorHandler(tokenizeErr.message || tokenizeErr)
       this.applePay.session.completePayment(ApplePaySession.STATUS_FAILURE)
     })
