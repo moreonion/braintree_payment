@@ -61,10 +61,11 @@ class ApplePayElement extends ButtonElement {
       const $button = this.generateButton()
       this.renderButton($button)
       $button.on('click', () => {
+        this.selectRadio()
         const paymentRequest = applePayInstance.createPaymentRequest(this.settings.requestData)
         const session = this.applePay.session = new ApplePaySession(3, paymentRequest)
-        session.onvalidatemerchant = this.validateMerchantHandler
-        session.onpaymentauthorized = this.paymentAuthorizedHandler
+        session.onvalidatemerchant = this.validateMerchantHandler.bind(this)
+        session.onpaymentauthorized = this.paymentAuthorizedHandler.bind(this)
         session.begin()
       })
     }).catch((err) => {
@@ -127,9 +128,9 @@ class ApplePayElement extends ButtonElement {
       token: event.payment.token
     }).then((payload) => {
       this.setNonce(payload.nonce)
-      this.selectRadio()
       // Dismiss the Apple Pay sheet.
       this.applePay.session.completePayment(ApplePaySession.STATUS_SUCCESS)
+      this.submitForm()
     }).catch((tokenizeErr) => {
       this.errorHandler(tokenizeErr.message || tokenizeErr)
       this.applePay.session.completePayment(ApplePaySession.STATUS_FAILURE)
