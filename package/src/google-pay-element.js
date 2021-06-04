@@ -124,7 +124,7 @@ class GooglePayElement extends MethodElement {
   submitForm () {
     // As a heuristic assume that the first submit button without formnovalidate
     // is the one we should trigger.
-    this.$element.closest('form').find('[type="submit"]:not([formnovalidate])').click()
+    this.$element.closest('form').find('[type="submit"]:not([formnovalidate])').first().click()
   }
 
   /**
