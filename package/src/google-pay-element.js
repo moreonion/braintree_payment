@@ -81,11 +81,6 @@ class GooglePayElement extends ButtonElement {
       transactionInfo: this.settings.transactionInfo,
     })
     const cardPaymentMethod = paymentDataRequest.allowedPaymentMethods[0]
-    cardPaymentMethod.parameters.billingAddressRequired = true
-    cardPaymentMethod.parameters.billingAddressParameters = {
-      format: 'FULL',
-      phoneNumberRequired: true
-    }
     this.paymentsClient.loadPaymentData(paymentDataRequest).then((paymentData) => {
       return this.googlePaymentInstance.parseResponse(paymentData)
     }).then((result) => {
