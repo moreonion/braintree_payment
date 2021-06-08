@@ -26,7 +26,14 @@ class GooglePayForm implements PaymentFormInterface {
    */
   public function form(array $form, array &$form_state, \Payment $payment) {
     $form = BraintreeForm::form($form, $form_state, $payment);
-    // Attac additional JS.
+
+    // Add extra data.
+    $customer_data_form = $payment->method->controller->customerDataForm();
+    $form['extra_data'] = [
+      '#weight' => 100,
+    ] + $customer_data_form->form($payment->method->controller_data['input_settings'], $payment->contextObj);
+
+    // Attach additional JS.
     $base_url = BraintreeForm::jsUrl();
     $js_options = ['type' => 'external', 'group' => JS_LIBRARY];
     $form['#attached']['js'] += [

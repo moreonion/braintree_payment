@@ -15,6 +15,7 @@ class ApplePayController extends BraintreeController {
     'apple_pay_button_color' => 'black',
     'private_key' => '',
     'public_key'  => '',
+    'input_settings' => [],
     'enable_recurrent_payments' => 0,
   ];
 
