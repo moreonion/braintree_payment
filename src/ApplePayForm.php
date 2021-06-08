@@ -27,7 +27,7 @@ class ApplePayForm implements PaymentFormInterface {
         'label' => $cd['apple_pay_display_name'],
       ],
       // Available: "email"?, "name", "phone", "postalAddress".
-      'requiredBillingContactFields' => ['name', 'postalAddress'],
+      'requiredBillingContactFields' => [],
       // Add form values if desired.
       // see https://developer.apple.com/documentation/apple_pay_on_the_web/applepaypaymentcontact
       'billingContact' => [],
