@@ -27,7 +27,7 @@ class ApplePayConfigurationForm extends BraintreeConfigurationForm {
     $customer_data_form = $method->controller->customerDataForm();
     $form['input_settings'] = [
       '#weight' => 100,
-    ] + $customer_data_form->configurationForm($method->controller_data['input_settings']);
+    ] + $customer_data_form->configurationForm($method->controller_data['input_settings'], FALSE, FALSE);
 
     $form['apple_pay_display_name'] = [
       '#type' => 'textfield',
