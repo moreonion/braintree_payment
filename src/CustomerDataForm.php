@@ -49,14 +49,14 @@ class CustomerDataForm {
         'street_address' => [
           'enabled' => TRUE,
           'display' => 'hidden',
-          'keys' => ['street_address', 'address_line2'],
+          'keys' => ['street_address', 'address_line1'],
           'required' => FALSE,
           'display_other' => 'hidden',
         ],
         'address_line2' => [
           'enabled' => TRUE,
           'display' => 'hidden',
-          'keys' => ['first_name', 'given_name'],
+          'keys' => ['street_address_2', 'address_line2'],
           'required' => FALSE,
           'display_other' => 'hidden',
         ],
