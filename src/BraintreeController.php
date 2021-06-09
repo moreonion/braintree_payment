@@ -177,6 +177,25 @@ class BraintreeController extends \PaymentMethodController {
   }
 
   /**
+   * Define columns for the webform data export.
+   */
+  public function webformDataInfo() {
+    $info['transaction_id'] = t('Transaction ID');
+    return $info;
+  }
+
+  /**
+   * Generate data for the webform export.
+   *
+   * @param \Payment $payment
+   *   The payment to export.
+   */
+  public function webformData(\Payment $payment) {
+    $data['transaction_id'] = $payment->braintree['braintree_id'] ?? '';
+    return $data;
+  }
+
+  /**
    * This method is "overloaded" to enable mocking in testing scenarios.
    */
   protected function watchdog($scope, $msg, $variables, $log_level) {
