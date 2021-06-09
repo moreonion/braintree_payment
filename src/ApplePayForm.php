@@ -10,33 +10,6 @@ use Drupal\payment_forms\PaymentFormInterface;
 class ApplePayForm implements PaymentFormInterface {
 
   /**
-   * Collect data for the payment request (passed to the client side JS).
-   *
-   * @param \Payment $payment
-   *   The payment object.
-   *
-   * @return array
-   *   The data array.
-   */
-  private function requestData(\Payment $payment) {
-    $cd = $payment->method->controller_data;
-    return [
-      'total' => [
-        'type' => 'final',
-        'amount' => (string) $payment->totalAmount(TRUE),
-        'label' => $cd['apple_pay_display_name'],
-      ],
-      // Available: "email"?, "name", "phone", "postalAddress".
-      'requiredBillingContactFields' => [],
-      // Add form values if desired.
-      // see https://developer.apple.com/documentation/apple_pay_on_the_web/applepaypaymentcontact
-      'billingContact' => [],
-      // Any reference we'd like to include, pid maybe?
-      'applicationData' => drupal_base64_encode(''),
-    ];
-  }
-
-  /**
    * Add form elements for Braintree Apple Pay payments.
    *
    * @param array $form
@@ -66,9 +39,15 @@ class ApplePayForm implements PaymentFormInterface {
       "$base_url/apple-pay.min.js" => $js_options,
     ];
     $pmid = $payment->method->pmid;
-    $settings = &$form['#attached']['js'][0]['data']['braintree_payment']["pmid_$pmid"];
-    $settings['requestData'] = $this->requestData($payment);
     $cd = $payment->method->controller_data;
+    $settings = &$form['#attached']['js'][0]['data']['braintree_payment']["pmid_$pmid"];
+    $settings['requestData'] = [
+      'total' => [
+        'type' => 'final',
+        'amount' => (string) $payment->totalAmount(TRUE),
+        'label' => $cd['apple_pay_display_name'],
+      ],
+    ];
     $settings['displayName'] = $cd['apple_pay_display_name'];
     $settings['buttonColor'] = $cd['apple_pay_button_color'];
 
