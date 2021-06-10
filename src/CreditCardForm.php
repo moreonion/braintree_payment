@@ -9,7 +9,18 @@ use Drupal\payment_forms\CreditCardForm as _CreditCardForm;
  */
 class CreditCardForm extends _CreditCardForm {
 
+  /**
+   * Reset credit card issuers.
+   *
+   * @var array
+   */
   static protected $issuers = [];
+
+  /**
+   * Reset CVS labels.
+   *
+   * @var array
+   */
   static protected $cvcLabel = [];
 
   /**

@@ -7,6 +7,11 @@ namespace Drupal\braintree_payment;
  */
 class ApplePayController extends BraintreeController {
 
+  /**
+   * Default values for the controller configuration.
+   *
+   * @var array
+   */
   public $controller_data_defaults = [
     'environment' => 'sandbox',
     'merchant_id' => '',
