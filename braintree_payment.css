@@ -1,3 +1,4 @@
+/* Braintree hosted fields */
 .braintree-hosted-fields-wrapper iframe {
   display: none;
 }
@@ -39,4 +40,18 @@
   background: white;
   opacity: 0.6;
   margin-bottom: -16px;
+}
+
+/* Braintree Apple Pay */
+button.braintree.apple-pay {
+  width: 100%;
+  min-height: 40px;
+}
+@supports (-webkit-appearance: -apple-pay-button) {
+  button.braintree.apple-pay {
+    -webkit-appearance: -apple-pay-button;
+  }
+  button.braintree.apple-pay span {
+    visibility: hidden;
+  }
 }
