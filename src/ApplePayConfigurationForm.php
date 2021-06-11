@@ -36,17 +36,6 @@ class ApplePayConfigurationForm extends BraintreeConfigurationForm {
       '#maxlength' => 128,
       '#required' => TRUE,
     ];
-    $form['apple_pay_button_color'] = [
-      '#type' => 'select',
-      '#title' => t('Apple Pay button color'),
-      '#description' => t('Choose the color with the most contrast to the form background.'),
-      '#default_value' => $cd['apple_pay_button_color'],
-      '#options' => array(
-        'black' => t('Black'),
-        'white' => t('White'),
-        'white-outline' => t('White with outline'),
-      ),
-    ];
     return $form;
   }
 

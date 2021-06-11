@@ -49,7 +49,6 @@ class ApplePayForm implements PaymentFormInterface {
       ],
     ];
     $settings['displayName'] = $cd['apple_pay_display_name'];
-    $settings['buttonColor'] = $cd['apple_pay_button_color'];
 
     return $form;
   }

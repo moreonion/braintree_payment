@@ -17,7 +17,6 @@ class ApplePayController extends BraintreeController {
     'merchant_id' => '',
     'merchant_account_id' => '',
     'apple_pay_display_name' => '',
-    'apple_pay_button_color' => 'black',
     'private_key' => '',
     'public_key'  => '',
     'input_settings' => [],

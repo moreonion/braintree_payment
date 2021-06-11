@@ -94,7 +94,6 @@ class ApplePayElement extends ButtonElement {
     @supports (-webkit-appearance: -apple-pay-button) {
       button.apple-pay {
         -webkit-appearance: -apple-pay-button;
-        -apple-pay-button-style: ${this.settings.buttonColor};
       }
       button.apple-pay span {
         visibility: hidden;
