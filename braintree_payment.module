@@ -54,6 +54,40 @@ function braintree_payment_libraries_info() {
 }
 
 /**
+ * Implements hook_menu().
+ */
+function braintree_payment_menu() {
+  $items = [];
+  // Provide the Domain Association File for Apple Pay.
+  $apple_pay_methods = array_filter(entity_load('payment_method'), function ($m) {
+    return $m->controller instanceof ApplePayController && $m->enabled;
+  });
+  if (!empty($apple_pay_methods)) {
+    $items['.well-known/apple-developer-merchantid-domain-association'] = [
+      'title' => 'Apple Developer MerchantID Domain Association',
+      'access callback' => TRUE,
+      'page callback' => 'braintree_payment_apple_pay_domain_association_file',
+    ];
+  }
+  return $items;
+}
+
+/**
+ * Menu callback returning the Braintree Domain Association File for Apple Pay.
+ *
+ * The file is a copy of
+ * https://assets.braintreegateway.com/web/static/apple-pay/apple-developer-merchantid-domain-association.
+ */
+function braintree_payment_apple_pay_domain_association_file() {
+  drupal_add_http_header('Content-type', 'application/octet-stream');
+  $path = drupal_get_path('module', 'braintree_payment');
+  $path .= '/static/apple-developer-merchantid-domain-association';
+  readfile($path);
+  drupal_page_footer();
+  exit;
+}
+
+/**
  * Implements hook_entity_load().
  */
 function braintree_payment_entity_load(array $entities, $entity_type) {
