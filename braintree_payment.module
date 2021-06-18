@@ -161,6 +161,33 @@ function braintree_payment_campaignion_logcrm_payment_event_data_alter(array &$d
 }
 
 /**
+ * Implements hook_payment_method_insert().
+ */
+function braintree_payment_payment_method_insert(PaymentMethod $method) {
+  if ($method->controller instanceof ApplePayController) {
+    variable_set('menu_rebuild_needed', TRUE);
+  }
+}
+
+/**
+ * Implements hook_payment_method_update().
+ */
+function braintree_payment_payment_method_update(PaymentMethod $method) {
+  if ($method->controller instanceof ApplePayController) {
+    variable_set('menu_rebuild_needed', TRUE);
+  }
+}
+
+/**
+ * Implements hook_payment_method_delete().
+ */
+function braintree_payment_payment_method_delete(PaymentMethod $method) {
+  if ($method->controller instanceof ApplePayController) {
+    variable_set('menu_rebuild_needed', TRUE);
+  }
+}
+
+/**
  * Element validate callback: Comma separated keys.
  */
 function _braintree_payment_validate_comma_separated_keys($element, &$form_state, $form) {
