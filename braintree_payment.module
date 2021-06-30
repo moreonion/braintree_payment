@@ -6,6 +6,7 @@
  */
 
 use Drupal\braintree_payment\CreditCardController;
+use Drupal\braintree_payment\GooglePayController;
 
 /**
  * Implemnts hook_theme().
@@ -23,9 +24,9 @@ function braintree_payment_theme() {
  * Implements hook_payment_method_controller_info().
  */
 function braintree_payment_payment_method_controller_info() {
-  return array(
-    'braintree_payment_credit_card' => '\Drupal\braintree_payment\CreditCardController',
-  );
+  $info['braintree_payment_credit_card'] = CreditCardController::class;
+  $info['braintree_payment_google_pay'] = GooglePayController::class;
+  return $info;
 }
 
 /**
@@ -74,7 +75,7 @@ function braintree_payment_entity_load(array $entities, $entity_type) {
  * Implements hook_payment_insert().
  */
 function braintree_payment_payment_insert(Payment $payment) {
-  if ($payment->method->controller instanceof CreditCardController) {
+  if (_braintree_payment_controlled_payment_method($payment->method)) {
     $data = !empty($payment->braintree) ? $payment->braintree : [];
     $data += [
       'braintree_id' => '',
@@ -90,7 +91,7 @@ function braintree_payment_payment_insert(Payment $payment) {
  * Implements hook_payment_update().
  */
 function braintree_payment_payment_update(Payment $payment) {
-  if ($payment->method->controller instanceof CreditCardController) {
+  if (_braintree_payment_controlled_payment_method($payment->method)) {
     $data = !empty($payment->braintree) ? $payment->braintree : [];
     $data += [
       'braintree_id' => '',
@@ -115,7 +116,7 @@ function braintree_payment_payment_delete(Payment $payment) {
  * Implements hook_campaignion_logcrm_payment_event_data_alter().
  */
 function braintree_payment_campaignion_logcrm_payment_event_data_alter(array &$data, Payment $payment) {
-  if ($payment->method->controller instanceof CreditCardController) {
+  if (_braintree_payment_controlled_payment_method($payment->method)) {
     $data['braintree_id'] = NULL;
     if (!empty($payment->braintree['braintree_id'])) {
       $data['braintree_id'] = $payment->braintree['braintree_id'];
@@ -138,4 +139,12 @@ function braintree_payment_hosted_fields_process($element) {
   $element['#input'] = FALSE;
   array_unshift($element['#theme_wrappers'], 'braintree_payment_hosted_field');
   return $element;
+}
+
+/**
+ * Helper function to check if a payment method uses a Braintree controller.
+ */
+function _braintree_payment_controlled_payment_method(\PaymentMethod $method) {
+  $info = braintree_payment_payment_method_controller_info();
+  return isset($info[$method->controller->name]);
 }

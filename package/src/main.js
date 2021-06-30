@@ -1,10 +1,16 @@
 /* global Drupal, jQuery */
 
-import { MethodElement } from './method-element'
+import { CreditCardElement } from './credit-card-element'
+import { GooglePayElement } from './google-pay-element'
 
-var $ = jQuery
+const $ = jQuery
 Drupal.behaviors.braintree_payment = {}
+Drupal.behaviors.braintree_payment.element_map = {
+  'braintree_payment_credit_card': CreditCardElement,
+  'braintree_payment_google_pay': GooglePayElement,
+}
 Drupal.behaviors.braintree_payment.attach = function (context, settings) {
+  const behavior = this
   if (!Drupal.payment_handler) {
     Drupal.payment_handler = {}
   }
@@ -13,12 +19,15 @@ Drupal.behaviors.braintree_payment.attach = function (context, settings) {
       // Guard against running for unmounted elements.
       return
     }
-    var $method = $(this).closest('.payment-method-form')
-    var pmid = $method.attr('data-pmid')
-    var element = new MethodElement($method, settings.braintree_payment['pmid_' + pmid])
+    const $method = $(this).closest('.payment-method-form')
+    const pmid = $method.attr('data-pmid')
+    const methodSettings = settings.braintree_payment['pmid_' + pmid]
 
-    Drupal.payment_handler[pmid] = function (pmid, $method, submitter) {
-      element.validate(submitter)
+    if (methodSettings.method in behavior.element_map) {
+      const element = new behavior.element_map[methodSettings.method]($method, methodSettings)
+      Drupal.payment_handler[pmid] = function (pmid, $method, submitter) {
+        element.validate(submitter)
+      }
     }
   })
 }

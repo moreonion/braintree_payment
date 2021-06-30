@@ -3,9 +3,9 @@
 namespace Drupal\braintree_payment;
 
 /**
- * Defines the controller class of the Braintree payment method.
+ * Defines the controller class of the Braintree google pay payment method.
  */
-class CreditCardController extends BraintreeController {
+class GooglePayController extends BraintreeController {
 
   /**
    * Default values for the controller configuration.
@@ -16,39 +16,41 @@ class CreditCardController extends BraintreeController {
     'environment' => 'sandbox',
     'merchant_id' => '',
     'merchant_account_id' => '',
+    'google_pay_merchant_id' => '',
+    'google_pay_button_type' => 'buy',
+    'google_pay_button_color' => 'default',
     'private_key' => '',
     'public_key'  => '',
-    'input_settings' => [],
-    'enable_recurrent_payments' => 0,
     'force_liability_shift' => FALSE,
+    'enable_recurrent_payments' => 0,
   ];
 
   /**
    * Create a new controller instance.
    */
   public function __construct() {
-    $this->title = t('Braintree Credit Card');
+    $this->title = t('Braintree Google Pay');
     parent::__construct();
   }
 
   /**
    * Get a new payment form.
    *
-   * @return CreditCardForm
+   * @return GooglePayForm
    *   A new payment form.
    */
   public function paymentForm() {
-    return new CreditCardForm();
+    return new GooglePayForm();
   }
 
   /**
    * Get a form for configuring the payment method.
    *
-   * @return CreditCardConfigurationForm
+   * @return GooglePayConfigurationForm
    *   A new configuration form.
    */
   public function configurationForm() {
-    return new CreditCardConfigurationForm();
+    return new GooglePayConfigurationForm();
   }
 
 }

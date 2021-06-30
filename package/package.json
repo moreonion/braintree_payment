@@ -3,25 +3,28 @@
   "version": "0.0.0",
   "description": "JavaScript behavior for braintree_payment",
   "scripts": {
-    "dist": "parcel build --no-source-maps --global braintree_payment -d dist -o braintree.min.js src/main.js",
-    "dev": "parcel --global braintree_payment -d build src/index.html",
+    "dist": "parcel build --no-source-maps -d dist -o braintree.min.js src/main.js",
+    "dev": "parcel build --no-minify --no-source-maps -d dist -o braintree.js src/main.js",
+    "drupal:dist": "yarn run dist && cp dist/braintree.min.js ../braintree.js",
+    "drupal:dev": "yarn run dev && cp dist/braintree.js ../braintree.js",
+    "http": "parcel --global braintree_payment -d build src/index.html",
     "test": "mocha --require babel-core/register --ui tdd --reporter dot test",
-    "lint": "eslint src test"
+    "lint": "eslint src"
   },
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-eslint": "^10.0.1",
+    "@babel/core": "^7.13",
+    "@babel/eslint-parser": "^7.13",
+    "@babel/preset-env": "^7.13",
     "babel-preset-env": "^1.7.0",
-    "eslint": "^5.16.0",
-    "eslint-config-standard": "^12.0.0",
+    "eslint": "^7.24.0",
+    "eslint-config-standard": "^16.0.2",
     "eslint-plugin-import": "^2.17.2",
-    "eslint-plugin-node": "^9.0.1",
-    "eslint-plugin-promise": "^4.1.1",
-    "eslint-plugin-standard": "^4.0.0",
-    "mocha": "^6.1.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "eslint-plugin-standard": "^5.0.0",
+    "mocha": "^8.3.2",
     "parcel-bundler": "^1.12.3",
-    "parcel-plugin-eslint": "^1.0.7",
-    "sinon": "^7.3.2"
+    "sinon": "^10.0.0"
   },
   "dependencies": {}
 }
