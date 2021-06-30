@@ -23,8 +23,13 @@ class CreditCardConfigurationForm extends BraintreeConfigurationForm {
   public function form(array $form, array &$form_state, \PaymentMethod $method) {
     $cd = $method->controller_data;
     $form = parent::form($form, $form_state, $method);
-    $customer_data_form = $method->controller->customerDataForm();
-    $form['input_settings'] = ['#weight' => 100] + $customer_data_form->configurationForm($method->controller_data['input_settings']);
+
+    // Add extra data.
+    $customer_data_form = $payment->method->controller->customerDataForm();
+    $form['extra_data'] = [
+      '#weight' => 100,
+    ] + $customer_data_form->form($payment->method->controller_data['input_settings'], $payment->contextObj);
+
     $form['force_liability_shift'] = [
       '#type' => 'checkbox',
       '#title' => t('Refuse payments without liability shift'),

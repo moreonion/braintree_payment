@@ -3,13 +3,17 @@
 namespace Drupal\braintree_payment;
 
 use Braintree\Gateway;
-use Braintree\Transaction;
 
 /**
  * Defines the controller class of the Braintree payment method.
  */
 class BraintreeController extends \PaymentMethodController {
 
+  /**
+   * Default values for the controller configuration.
+   *
+   * @var array
+   */
   public $controller_data_defaults = [
     'environment' => 'sandbox',
     'merchant_id' => '',
@@ -19,6 +23,11 @@ class BraintreeController extends \PaymentMethodController {
     'enable_recurrent_payments' => 0,
   ];
 
+  /**
+   * The Braintree gateway for the controller.
+   *
+   * @var Braintree\Gateway
+   */
   protected $gateway = NULL;
 
   /**
@@ -174,6 +183,25 @@ class BraintreeController extends \PaymentMethodController {
       }
       $this->watchdog('braintree_payment', $message, $variables, WATCHDOG_ERROR);
     }
+  }
+
+  /**
+   * Define columns for the webform data export.
+   */
+  public function webformDataInfo() {
+    $info['transaction_id'] = t('Transaction ID');
+    return $info;
+  }
+
+  /**
+   * Generate data for the webform export.
+   *
+   * @param \Payment $payment
+   *   The payment to export.
+   */
+  public function webformData(\Payment $payment) {
+    $data['transaction_id'] = $payment->braintree['braintree_id'] ?? '';
+    return $data;
   }
 
   /**

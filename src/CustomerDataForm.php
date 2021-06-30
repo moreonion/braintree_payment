@@ -49,14 +49,14 @@ class CustomerDataForm {
         'street_address' => [
           'enabled' => TRUE,
           'display' => 'hidden',
-          'keys' => ['street_address', 'address_line2'],
+          'keys' => ['street_address', 'address_line1'],
           'required' => FALSE,
           'display_other' => 'hidden',
         ],
         'address_line2' => [
           'enabled' => TRUE,
           'display' => 'hidden',
-          'keys' => ['first_name', 'given_name'],
+          'keys' => ['street_address_2', 'address_line2'],
           'required' => FALSE,
           'display_other' => 'hidden',
         ],
@@ -251,8 +251,12 @@ class CustomerDataForm {
    *
    * @param array $settings
    *   Form settings.
+   * @param bool $set_display
+   *   Allow custom configuration of field display settings.
+   * @param bool $set_required
+   *   Allow custom configuration field required settings.
    */
-  public function configurationForm(array $settings) {
+  public function configurationForm(array $settings, bool $set_display = TRUE, bool $set_required = TRUE) {
     ArrayConfig::mergeDefaults($settings, static::defaultSettings());
     $form['#type'] = 'container';
     // Configuration for extra data elements.
@@ -260,7 +264,7 @@ class CustomerDataForm {
     $extra['#settings_element'] = &$form;
     $extra['#settings_defaults'] = $settings;
     $extra['#settings_root'] = TRUE;
-    ElementTree::applyRecursively($extra, function (&$element, $key, &$parent) {
+    ElementTree::applyRecursively($extra, function (&$element, $key, &$parent) use ($set_required, $set_display) {
       if (!$key) {
         // Skip the root element.
         return;
@@ -287,7 +291,7 @@ class CustomerDataForm {
         $enabled_id = drupal_html_id('controller_data_enabled_' . $key);
         $fieldset['enabled'] = [
           '#type' => 'checkbox',
-          '#title' => t('Enabled: Make this field available for Advanced Fraud Protection purposes.'),
+          '#title' => t('Make this field available to Braintree (e.g. for Advanced Fraud Protection purposes).'),
           '#default_value' => $defaults['enabled'],
           '#id' => $enabled_id,
         ];
@@ -299,6 +303,7 @@ class CustomerDataForm {
           '#default_value' => $defaults['display'],
           '#id' => $display_id,
           '#states' => ['visible' => ["#$enabled_id" => ['checked' => TRUE]]],
+          '#access' => $set_display,
         ];
         if (empty($parent['#settings_root'])) {
           $fieldset['display_other'] = [
@@ -310,6 +315,7 @@ class CustomerDataForm {
               'invisible' => ["#$display_id" => ['value' => 'always']],
               'visible' => ["#$enabled_id" => ['checked' => TRUE]],
             ],
+            '#access' => $set_display,
           ];
         }
         $fieldset['required'] = array(
@@ -317,7 +323,7 @@ class CustomerDataForm {
           '#title' => t('Required'),
           '#states' => ['disabled' => ["#$display_id" => ['value' => 'hidden']]],
           '#default_value' => $defaults['required'],
-          '#access' => !$required,
+          '#access' => !$required && $set_required,
           '#states' => ['visible' => ["#$enabled_id" => ['checked' => TRUE]]],
         );
         $fieldset['keys'] = array(

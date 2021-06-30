@@ -7,14 +7,19 @@ namespace Drupal\braintree_payment;
  */
 class ApplePayController extends BraintreeController {
 
+  /**
+   * Default values for the controller configuration.
+   *
+   * @var array
+   */
   public $controller_data_defaults = [
     'environment' => 'sandbox',
     'merchant_id' => '',
     'merchant_account_id' => '',
     'apple_pay_display_name' => '',
-    'apple_pay_button_color' => 'black',
     'private_key' => '',
     'public_key'  => '',
+    'input_settings' => [],
     'enable_recurrent_payments' => 0,
   ];
 

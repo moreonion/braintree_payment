@@ -78,31 +78,14 @@ class ApplePayElement extends ButtonElement {
    * Generate Apple Pay button markup and styles.
    */
   generateButton () {
-    const $button = $(`
+    return $(`
     <button
       type="button"
-      class="button apple-pay"
+      class="button braintree apple-pay"
       aria-label="Apple Pay"
       lang=${document.documentElement.lang.substring(0, 2)}
     ><span>Apple Pay</span>
     </button>`)
-    const $styles = `<style type="text/css">
-    button.apple-pay {
-      width: 100%;
-      min-height: 40px;
-    }
-    @supports (-webkit-appearance: -apple-pay-button) {
-      button.apple-pay {
-        -webkit-appearance: -apple-pay-button;
-        -apple-pay-button-style: ${this.settings.buttonColor};
-      }
-      button.apple-pay span {
-        visibility: hidden;
-      }
-    }
-    </style>`
-    $('head').append($styles)
-    return $button
   }
 
   /**
