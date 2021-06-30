@@ -14,9 +14,9 @@ use Upal\DrupalUnitTestCase;
 class CreditCardFormTest extends DrupalUnitTestCase {
 
   /**
-   * Create a payment stub for testing.
+   * Create a payment method stub for testing.
    */
-  protected function paymentStub() {
+  protected function paymentMethodStub() {
     $controller = new CreditCardController();
     $mock_gateway = $this->createMock(Gateway::class);
     $mock_gateway->method('clientToken')->willReturn($this->createMock(ClientTokenGateway::class));
@@ -26,6 +26,14 @@ class CreditCardFormTest extends DrupalUnitTestCase {
       'controller_data' => [],
     ]);
     ArrayConfig::mergeDefaults($method->controller_data, $controller->controller_data_defaults);
+    return $method;
+  }
+
+  /**
+   * Create a payment stub for testing.
+   */
+  protected function paymentStub() {
+    $method = $this->paymentMethodStub();
     $context = $this->createMock(NullPaymentContext::class);
     $payment = new \Payment([
       'description' => 'braintree test payment',
@@ -34,6 +42,17 @@ class CreditCardFormTest extends DrupalUnitTestCase {
       'contextObj' => $context,
     ]);
     return $payment;
+  }
+
+  /**
+   * Test rendering the method configration form with defaults.
+   */
+  public function testConfigFormWithDefaults() {
+    $method = $this->paymentMethodStub();
+    $form = new CreditCardConfigurationForm();
+    $form_state = [];
+    $form_array = $form->form([], $form_state, $method);
+    $this->assertArrayHasKey('force_liability_shift', $form_array);
   }
 
   /**
