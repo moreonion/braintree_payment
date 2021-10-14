@@ -21,4 +21,8 @@ function template_process_braintree_payment_hosted_field(array &$vars) {
   $vars['attributes'] = $element['#attributes'] ?? [];
   $vars['attributes']['class'] = $element['#wrapper_classes'];
   $vars['attributes']['data-braintree-hosted-fields-field'] = $element['#field_name'];
+  $parents = $vars['element']['#parents'];
+  $name = array_shift($parents);
+  $name .= $parents ? '[' . implode('][', $parents) . ']' : '';
+  $vars['attributes']['name'] = $name;
 }
