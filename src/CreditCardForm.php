@@ -46,25 +46,21 @@ class CreditCardForm extends _CreditCardForm {
       '#process' => array_merge(['braintree_payment_hosted_fields_process'], element_info('textfield')['#process']),
       '#field_name' => 'number',
       '#wrapper_classes' => ['cc-number'],
-      '#parents' => ['cc-number'],
     ] + $form['credit_card_number'];
     $form['secure_code'] = [
       '#process' => array_merge(['braintree_payment_hosted_fields_process'], element_info('textfield')['#process']),
       '#field_name' => 'cvv',
       '#wrapper_classes' => ['cc-cvv'],
-      '#parents' => ['cc-cvv'],
     ] + $form['secure_code'];
     $form['expiry_date']['month'] = [
       '#process' => array_merge(['braintree_payment_hosted_fields_process'], element_info('select')['#process']),
       '#field_name' => 'expirationMonth',
       '#wrapper_classes' => ['cc-month'],
-      '#parents' => ['cc-month'],
     ] + $form['expiry_date']['month'];
     $form['expiry_date']['year'] = [
       '#process' => array_merge(['braintree_payment_hosted_fields_process'], element_info('select')['#process']),
       '#field_name' => 'expirationYear',
       '#wrapper_classes' => ['cc-year'],
-      '#parents' => ['cc-year'],
     ] + $form['expiry_date']['year'];
 
     // Add extra data.
