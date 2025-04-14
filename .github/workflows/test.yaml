@@ -44,7 +44,7 @@ jobs:
       run: |
         mkdir -p $COMPOSER_HOME
         cd $COMPOSER_HOME
-        composer require drush/drush:8.3.* phpunit/phpunit:^8 torotil/upal:2.0.0-RC1 braintree/braintree_php=3.40.0
+        composer require drush/drush:8.3.* phpunit/phpunit:^8 torotil/upal:2.0.0-RC1 braintree/braintree_php=6.24.0
     - name: Cache composer packages
       id: composer-cache-write
       uses: actions/cache/save@v4
