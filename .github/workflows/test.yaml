@@ -34,7 +34,7 @@ jobs:
       id: composer-cache
       run: |
         echo "::set-output name=dir::$(composer config cache-files-dir)"
-    - uses: actions/cache@v2
+    - uses: actions/cache/restore@v4
       with:
         path: ${{ steps.composer-cache.outputs.dir }}
         key: ${{ runner.os }}-composer-
@@ -44,13 +44,19 @@ jobs:
       run: |
         mkdir -p $COMPOSER_HOME
         cd $COMPOSER_HOME
-        composer require drush/drush:8.3.* phpunit/phpunit:^8 torotil/upal:2.0.0-RC1 braintree/braintree_php=3.40.0
+        composer require drush/drush:8.3.* phpunit/phpunit:^8 torotil/upal:2.0.0-RC1 braintree/braintree_php=6.24.0
+    - name: Cache composer packages
+      id: composer-cache-write
+      uses: actions/cache/save@v4
+      with:
+        key: ${{ runner.os }}-composer-
     - name: Bootstrap drupal
       run: |
         php -d sendmail_path=`which true` $COMPOSER_HOME/vendor/bin/drush.php --yes core-quick-drupal --core=drupal-7.82 --profile=testing --no-server --db-url=mysql://${{ env.DB_USER }}:${{ env.DB_PASSWORD }}@127.0.0.1:3306/${{ env.DB_DATABASE }} --root=$ROOT
         ln -s $REPO $ROOT/sites/all/modules/module_under_test
         cd $ROOT
         curl https://www.drupal.org/files/issues/1891356-drupal_static_reset-on-module-changes-30-D7.patch | patch -p1
+        drush dl xautoload-5.9 payment_forms-2.3 payment_controller_data-1.0 payment_context-1.0 payment-1.20 little_helpers-2.0-alpha12 libraries-2.5 entity-1.1 psr0-1.6
         drush --yes pm-enable braintree_payment
     - name: Run phpunit tests
       run: UPAL_ROOT=$ROOT UPAL_WEB_URL=http://127.0.0.1 XDEBUG_MODE=coverage phpunit --bootstrap=$COMPOSER_HOME/vendor/torotil/upal/bootstrap.php --coverage-clover=coverage.xml .
